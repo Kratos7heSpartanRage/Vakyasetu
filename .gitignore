@@ -51,3 +51,4 @@ data/processed/*
 *.swp
 get-pip.py
 data/lora_smoke/
+data/lora/

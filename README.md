@@ -43,28 +43,7 @@ response before rendering. See [`docs/architecture.md`](docs/architecture.md) fo
 
 ## Repository structure
 
-```
-vakyasetu/
-├── backend/
-│   └── app/
-│       ├── api/          # FastAPI route definitions
-│       ├── core/         # config, settings
-│       ├── models/       # Pydantic request/response schemas
-│       └── services/     # translation.py, sandhi.py, morphology.py wrappers
-├── frontend/
-│   ├── streamlit_app.py  # MVP UI (Phase 1)
-│   └── web/              # React app (Phase 2)
-├── ml/
-│   ├── scripts/          # data download, cleaning, fine-tuning, evaluation
-│   ├── notebooks/        # exploration notebooks
-│   └── checkpoints/      # fine-tuned weights (git-ignored)
-├── data/
-│   ├── raw/               # original downloaded corpora
-│   ├── interim/           # cleaned, normalized text
-│   ├── processed/         # final train/val/test splits
-│   └── ncert_gold/        # held-out NCERT benchmark — never used for training
-└── docs/                  # architecture notes, evaluation reports
-```
+
 
 ## Getting started
 
@@ -84,6 +63,37 @@ cd ../frontend
 pip install streamlit
 streamlit run streamlit_app.py
 ```
+## Reproducing the training data
+
+The Sāmayik dataset is downloaded from Hugging Face and cleaned by scripts in `ml/scripts/`.
+The generated data is not stored in git (see `.gitignore`).
+
+Run these from the repo root, with the virtual environment active and
+`pip install -r requirements.txt` already done:
+
+```bash
+# 1. Report only: shows quality counts, writes nothing (add --examples to see sample rows)
+python ml/scripts/inspect_samayik.py
+
+# 2. Write the cleaned data to data/processed/
+python ml/scripts/inspect_samayik.py --write
+
+# 3. Convert to the folder layout IndicTrans2's LoRA script expects -> data/lora/
+python ml/scripts/prepare_lora_data.py
+```
+
+For a quick GPU test, make a small dataset instead of step 3:
+
+```bash
+python ml/scripts/prepare_lora_data.py --out-dir data/lora_smoke --train-limit 2000 --dev-size 200
+```
+
+Expected numbers (if yours differ, the dataset or script versions differ):
+train 43,493 → 42,826 after cleaning; validation 2,416; test 2,417; test_ood 4,047.
+
+Rules: only training rows are ever removed. Validation and test are never filtered,
+so results stay comparable with the Sāmayik paper. None of the 11 NCERT evaluation
+sentences appear in any split.
 
 Copy `.env.example` to `.env` and fill in any local paths or optional API keys before running.
 
