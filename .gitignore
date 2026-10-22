@@ -50,3 +50,4 @@ data/processed/*
 .idea/
 *.swp
 get-pip.py
+data/lora_smoke/
