@@ -104,6 +104,7 @@ def make_generator(model, tokenizer, ip, device, beams, no_repeat=0):
     return generate_batch
 
 
+
 # ---------- scoring and output ----------
 
 def score(hyps, refs):

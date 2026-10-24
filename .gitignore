@@ -53,3 +53,8 @@ get-pip.py
 data/lora_smoke/
 data/lora/
 data/lora*/
+data/processed_filtered/
+ml/outputs/*.log
+ml/outputs/eval_test*
+ml/outputs/eval_ood*
+nohup.out
