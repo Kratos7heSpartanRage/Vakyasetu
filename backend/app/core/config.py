@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     
     # SQLite Cache configuration
-    CACHE_DB_PATH: str = "vakyasetu_cache.db"
+    CACHE_DB_PATH: str = str(Path(__file__).resolve().parents[2] / "vakyasetu_cache.db")
     
     # Model & Computational NLP configurations
     DEVICE: str = "cpu"

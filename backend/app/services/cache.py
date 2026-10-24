@@ -1,6 +1,8 @@
 from collections import OrderedDict
 import hashlib
 import json
+import os
+import tempfile
 import logging
 import sqlite3
 import threading
@@ -27,7 +29,11 @@ class SQLiteCache:
     """
 
     def __init__(self, db_path: Optional[str] = None, max_memory_entries: int = 2048):
-        self.db_path = db_path or settings.CACHE_DB_PATH
+        target_path = db_path or settings.CACHE_DB_PATH
+        if os.name == 'nt' and (target_path.startswith(("\\\\", "//")) or os.path.abspath(target_path).startswith(("\\\\", "//"))):
+            import tempfile
+            target_path = os.path.join(tempfile.gettempdir(), os.path.basename(target_path))
+        self.db_path = target_path
         self.max_memory_entries = max_memory_entries
         self._lock = threading.Lock()
         
@@ -51,13 +57,22 @@ class SQLiteCache:
                 timeout=15.0,
                 check_same_thread=False
             )
-            # High-performance PRAGMAs
-            self._conn.execute("PRAGMA journal_mode=WAL;")
-            self._conn.execute("PRAGMA synchronous=NORMAL;")
-            self._conn.execute("PRAGMA mmap_size=268435456;")  # 256MB memory-mapped I/O
-            self._conn.execute("PRAGMA cache_size=-8000;")     # 8MB page cache
-            self._conn.execute("PRAGMA temp_store=MEMORY;")    # In-memory temporary tables
-            self._conn.execute("PRAGMA busy_timeout=5000;")    # 5s retry on concurrency
+            # Resilient PRAGMAs (safe across UNC, WSL mounts, and standard filesystems)
+            try:
+                self._conn.execute("PRAGMA journal_mode=WAL;")
+            except Exception:
+                try:
+                    self._conn.execute("PRAGMA journal_mode=DELETE;")
+                except Exception:
+                    pass
+            try:
+                self._conn.execute("PRAGMA synchronous=NORMAL;")
+            except Exception:
+                pass
+            try:
+                self._conn.execute("PRAGMA busy_timeout=5000;")
+            except Exception:
+                pass
         return self._conn
 
     def _init_db(self) -> None:

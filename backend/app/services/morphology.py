@@ -6,8 +6,12 @@ from functools import lru_cache
 from typing import List, Optional, Set, Tuple, Dict, Any
 
 from indic_transliteration import sanscript
-from sanskrit_parser.base.sanskrit_base import SanskritNormalizedString
-from sanskrit_parser.parser.sandhi_analyzer import LexicalSandhiAnalyzer
+try:
+    from sanskrit_parser.base.sanskrit_base import SanskritNormalizedString
+    from sanskrit_parser.parser.sandhi_analyzer import LexicalSandhiAnalyzer
+except (ImportError, ModuleNotFoundError):
+    SanskritNormalizedString = None
+    LexicalSandhiAnalyzer = None
 
 from app.core.normalizer import SanskritNormalizer
 from app.core.modern_lexicon import MODERN_SANSKRIT_TERMS
@@ -649,6 +653,9 @@ TINANTA_PATTERNS: List[Tuple[str, str, str, str, int]] = [
     ("ति", "law", "praTamapuruzaH", "ekavacanam", 2),
     ("सि", "law", "maDyamapuruzaH", "ekavacanam", 2),
     ("थ", "law", "maDyamapuruzaH", "bahuvacanam", 1),
+    ("ामि", "law", "uttamapuruzaH", "ekavacanam", 3),
+    ("ावः", "law", "uttamapuruzaH", "dvivacanam", 3),
+    ("ामः", "law", "uttamapuruzaH", "bahuvacanam", 3),
     ("मि", "law", "uttamapuruzaH", "ekavacanam", 2),
     ("वः", "law", "uttamapuruzaH", "dvivacanam", 2),
     ("मः", "law", "uttamapuruzaH", "bahuvacanam", 2),
@@ -769,12 +776,16 @@ class MorphologyService:
         self._word_cache_lock = self._shared_word_cache_lock
 
     @classmethod
-    def _get_analyzer(cls) -> LexicalSandhiAnalyzer:
+    def _get_analyzer(cls) -> Optional[Any]:
         """Thread-safe singleton getter to avoid duplicate loads of Heritage lexicon."""
-        if cls._shared_analyzer is None:
+        if cls._shared_analyzer is None and LexicalSandhiAnalyzer is not None:
             with cls._analyzer_lock:
                 if cls._shared_analyzer is None:
-                    cls._shared_analyzer = LexicalSandhiAnalyzer()
+                    try:
+                        cls._shared_analyzer = LexicalSandhiAnalyzer()
+                    except Exception as e:
+                        logger.warning(f"Could not initialize LexicalSandhiAnalyzer: {e}")
+                        cls._shared_analyzer = None
         return cls._shared_analyzer
 
     @staticmethod
@@ -800,6 +811,8 @@ class MorphologyService:
         4. Upasarga prefix stripping with retroflex natva reversal (e.g. praRamati -> pra + namati).
         Returns list of (root_slp1, tag_set, detected_prefix_devanagari).
         """
+        if self._analyzer is None or SanskritNormalizedString is None:
+            return []
         slp1_token = self._devanagari_to_slp1(devanagari_token)
         candidates_to_try: List[str] = [slp1_token]
 
@@ -1378,6 +1391,55 @@ class MorphologyService:
                 )
                 return WordAnalysis(word=token, primary_gloss=gloss, confidence=0.90)
 
+        # 6.5 Check Verified NCERT Lexicon via SanskritVocabularyValidator
+        from app.services.sandhi_validator import SanskritVocabularyValidator
+        val_tok = SanskritVocabularyValidator.validate_token(clean)
+        if val_tok.is_valid and val_tok.status == "VERIFIED_LEXICAL_ITEM":
+            gen_val = "Neuter / नपुंसकलिङ्गम्" if "Neuter" in val_tok.pos else (
+                "Feminine / स्त्रीलिङ्गम्" if "Feminine" in val_tok.pos else (
+                    "Masculine / पुंल्लिङ्गम्" if "Masculine" in val_tok.pos else "त्रिषु लिङ्गेषु समानम् / All Genders"
+                )
+            )
+            case_val = "Nominative (1st Case) / प्रथमा विभक्तिः (कर्ता)"
+            if "Accusative" in val_tok.pos or "२/१" in val_tok.pos:
+                case_val = "Accusative (2nd Case) / द्वितीया विभक्तिः (कर्म)"
+            elif "Ablative" in val_tok.pos or "५/१" in val_tok.pos:
+                case_val = "Ablative (5th Case) / पञ्चमी विभक्तिः (अपादान)"
+            elif "Genitive" in val_tok.pos or "६/१" in val_tok.pos:
+                case_val = "Genitive (6th Case) / षष्ठी विभक्तिः (सम्बन्ध)"
+            elif "Locative" in val_tok.pos or "७/१" in val_tok.pos:
+                case_val = "Locative (7th Case) / सप्तमी विभक्तिः (अधिकरण)"
+            elif "Instrumental" in val_tok.pos or "३/१" in val_tok.pos:
+                case_val = "Instrumental (3rd Case) / तृतीया विभक्तिः (करण)"
+            elif "Vocative" in val_tok.pos or "८/१" in val_tok.pos:
+                case_val = "Vocative / सम्बोधनम्"
+
+            vacana_val = "Dual / द्विवचनम्" if ("Dual" in val_tok.pos or "/२" in val_tok.pos) else (
+                "Plural / बहुवचनम्" if ("Plural" in val_tok.pos or "/३" in val_tok.pos) else "Singular / एकवचनम्"
+            )
+
+            is_verb_type = "Verb" in val_tok.category
+            tense_val = "लङ् (Imperfect Past)" if "लङ्" in val_tok.pos else ("लट् (Present)" if "लट्" in val_tok.pos else None)
+
+            skt_exp = f"मूलम्: {val_tok.lemma} | {val_tok.category} | {val_tok.pos}"
+            eng_exp = f"{val_tok.category}: '{val_tok.lemma}' ({val_tok.meaning}), {val_tok.pos}."
+
+            gloss = MorphologicalGloss(
+                root=val_tok.lemma,
+                pos=val_tok.category,
+                gender=gen_val if not is_verb_type else None,
+                case=case_val if not is_verb_type else None,
+                number=vacana_val,
+                tense=tense_val,
+                person="3rd Person (प्रथमपुरुषः)" if is_verb_type else None,
+                prefix=None,
+                pratyaya=None,
+                voice="कर्तरि प्रयोगः / Active Voice" if is_verb_type else None,
+                sanskrit_explanation=skt_exp,
+                english_explanation=eng_exp,
+            )
+            return WordAnalysis(word=token, primary_gloss=gloss, confidence=val_tok.confidence)
+
         # 7. Universal Default Fallback
         default_gloss = MorphologicalGloss(
             root=clean,
@@ -1485,6 +1547,66 @@ class MorphologyService:
             if clean_word in self._word_cache:
                 self._word_cache.move_to_end(clean_word)
                 return self._word_cache[clean_word]
+
+        # 1.5 Sanskrit Vocabulary & Validation Layer lookup
+        from app.services.sandhi_validator import SanskritVocabularyValidator
+        val_tok = SanskritVocabularyValidator.validate_token(clean_word)
+        if val_tok.is_valid and val_tok.status == "VERIFIED_LEXICAL_ITEM":
+            gen_val = "Neuter / नपुंसकलिङ्गम्" if "Neuter" in val_tok.pos else (
+                "Feminine / स्त्रीलिङ्गम्" if "Feminine" in val_tok.pos else (
+                    "Masculine / पुंल्लिङ्गम्" if "Masculine" in val_tok.pos else "त्रिषु लिङ्गेषु समानम् / All Genders"
+                )
+            )
+            case_val = "Nominative (1st Case) / प्रथमा विभक्तिः (कर्ता)"
+            if "Accusative" in val_tok.pos or "२/१" in val_tok.pos or "२/३" in val_tok.pos:
+                case_val = "Accusative (2nd Case) / द्वितीया विभक्तिः (कर्म)"
+            elif "Ablative" in val_tok.pos or "५/१" in val_tok.pos:
+                case_val = "Ablative (5th Case) / पञ्चमी विभक्तिः (अपादान)"
+            elif "Genitive" in val_tok.pos or "६/१" in val_tok.pos:
+                case_val = "Genitive (6th Case) / षष्ठी विभक्तिः (सम्बन्ध)"
+            elif "Locative" in val_tok.pos or "७/१" in val_tok.pos:
+                case_val = "Locative (7th Case) / सप्तमी विभक्तिः (अधिकरण)"
+            elif "Instrumental" in val_tok.pos or "३/१" in val_tok.pos:
+                case_val = "Instrumental (3rd Case) / तृतीया विभक्तिः (करण)"
+            elif "Vocative" in val_tok.pos or "८/१" in val_tok.pos:
+                case_val = "Vocative / सम्बोधनम्"
+
+            vacana_val = "Dual / द्विवचनम्" if ("Dual" in val_tok.pos or "/२" in val_tok.pos) else (
+                "Plural / बहुवचनम्" if ("Plural" in val_tok.pos or "/३" in val_tok.pos) else "Singular / एकवचनम्"
+            )
+
+            is_verb_type = "Verb" in val_tok.category
+            tense_val = "लङ् (Imperfect Past)" if "लङ्" in val_tok.pos else (
+                "लट् (Present)" if "लट्" in val_tok.pos else (
+                    "लृट् (Future)" if "लृट्" in val_tok.pos else (
+                        "लोट् (Imperative)" if "लोट्" in val_tok.pos else None
+                    )
+                )
+            )
+            person_val = "1st Person (उत्तमपुरुषः)" if ("1st Person" in val_tok.pos or "1/1" in val_tok.pos) else (
+                "2nd Person (मध्यमपुरुषः)" if "2nd Person" in val_tok.pos else "3rd Person (प्रथमपुरुषः)"
+            )
+
+            skt_exp = f"मूलम्: {val_tok.lemma} | {val_tok.category} | {val_tok.pos}"
+            eng_exp = f"{val_tok.category}: '{val_tok.lemma}' ({val_tok.meaning}), {val_tok.pos}."
+
+            gloss = MorphologicalGloss(
+                root=val_tok.lemma,
+                pos=val_tok.category,
+                gender=gen_val if not is_verb_type and "Indeclinable" not in val_tok.pos else None,
+                case=case_val if not is_verb_type and "Indeclinable" not in val_tok.pos else None,
+                number=vacana_val if "Indeclinable" not in val_tok.pos else None,
+                tense=tense_val,
+                person=person_val if is_verb_type else None,
+                prefix=None,
+                pratyaya=None,
+                voice="कर्तरि प्रयोगः / Active Voice" if is_verb_type else None,
+                sanskrit_explanation=skt_exp,
+                english_explanation=eng_exp,
+            )
+            result = WordAnalysis(word=word, primary_gloss=gloss, confidence=val_tok.confidence)
+            self._cache_word(clean_word, result)
+            return result
 
         # 2. NCERT Avyaya check: Prevents rare nominal tags (e.g. 'api' -> water locative) from shadowing indeclinables
         if clean_word in NCERT_AVYAYAS:
