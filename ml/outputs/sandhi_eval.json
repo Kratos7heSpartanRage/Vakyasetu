@@ -10,7 +10,7 @@
       "word_precision": 0.9833,
       "word_recall": 0.9733,
       "word_f1": 0.9778,
-      "avg_ms_per_sentence": 458.5,
+      "avg_ms_per_sentence": 501.9,
       "accuracy_by_type": {
         "boundary": {
           "acc": 1.0,
@@ -80,7 +80,7 @@
       "word_precision": 0.9833,
       "word_recall": 0.9778,
       "word_f1": 0.98,
-      "avg_ms_per_sentence": 77.4,
+      "avg_ms_per_sentence": 79.7,
       "accuracy_by_type": {
         "boundary": {
           "acc": 1.0,
@@ -135,6 +135,75 @@
         "split->intact": 1,
         "split->split": 23
       }
+    },
+    "test": {
+      "sentences": 50,
+      "tokens": 270,
+      "token_accuracy": 0.9222,
+      "sentence_exact": 0.66,
+      "over_segmentation_rate": 0.0388,
+      "missed_split_rate": 0.0263,
+      "word_precision": 0.9074,
+      "word_recall": 0.9276,
+      "word_f1": 0.9163,
+      "avg_ms_per_sentence": 328.1,
+      "accuracy_by_type": {
+        "boundary": {
+          "acc": 0.6,
+          "n": 5
+        },
+        "consonant": {
+          "acc": 0.571,
+          "n": 7
+        },
+        "multi": {
+          "acc": 0.833,
+          "n": 6
+        },
+        "none": {
+          "acc": 0.966,
+          "n": 175
+        },
+        "normalize": {
+          "acc": 0.949,
+          "n": 39
+        },
+        "visarga": {
+          "acc": 0.815,
+          "n": 27
+        },
+        "vowel": {
+          "acc": 0.818,
+          "n": 11
+        }
+      },
+      "accuracy_by_status": {
+        "ambiguous": {
+          "acc": 0.636,
+          "n": 11
+        },
+        "compound": {
+          "acc": 0.974,
+          "n": 38
+        },
+        "resolved": {
+          "acc": 0.927,
+          "n": 219
+        },
+        "unattested": {
+          "acc": 1.0,
+          "n": 2
+        }
+      },
+      "outcome_confusion": {
+        "intact->intact": 169,
+        "intact->split": 6,
+        "reconstruct->intact": 3,
+        "reconstruct->reconstruct": 51,
+        "reconstruct->split": 3,
+        "split->intact": 1,
+        "split->split": 37
+      }
     }
   },
   "failures": [
@@ -181,6 +250,461 @@
         "हि",
         "मालयः"
       ]
+    },
+    {
+      "split": "test",
+      "id": "TEST-01",
+      "surface": "कश्चित्",
+      "type": "none",
+      "gold": [
+        "कश्चित्"
+      ],
+      "pred": [
+        "कः",
+        "चित्"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-01",
+      "surface": "कुर्वन्नासीत्",
+      "type": "consonant",
+      "gold": [
+        "कुर्वन्",
+        "आसीत्"
+      ],
+      "pred": [
+        "कुर्वत्",
+        "न",
+        "आसीत्"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "कुर्वन्",
+          "आसीत्"
+        ],
+        [
+          "कुर्वन्न",
+          "आसीत्"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-07",
+      "surface": "कश्चिल्लक्ष्यते",
+      "type": "consonant",
+      "gold": [
+        "कश्चित्",
+        "लक्ष्यते"
+      ],
+      "pred": [
+        "कः",
+        "चित्",
+        "लक्ष्यते"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-08",
+      "surface": "भयाकुलचित्तो",
+      "type": "visarga",
+      "gold": [
+        "भयाकुलचित्तः"
+      ],
+      "pred": [
+        "भय",
+        "आकुलचित्तः"
+      ],
+      "status": "ambiguous",
+      "alternatives": [
+        [
+          "भया",
+          "आकुलचित्तः"
+        ],
+        [
+          "भय",
+          "अकुलचित्तः"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-09",
+      "surface": "दुर्वहमत्र",
+      "type": "boundary",
+      "gold": [
+        "दुर्वहम्",
+        "अत्र"
+      ],
+      "pred": [
+        "दुरु",
+        "अहम्",
+        "अत्र"
+      ],
+      "status": "ambiguous",
+      "alternatives": [
+        [
+          "दुरू",
+          "अहम्",
+          "अत्र"
+        ],
+        [
+          "दुर्वहम्",
+          "अत्र"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-13",
+      "surface": "कश्चित्",
+      "type": "none",
+      "gold": [
+        "कश्चित्"
+      ],
+      "pred": [
+        "कः",
+        "चित्"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-21",
+      "surface": "स",
+      "type": "visarga",
+      "gold": [
+        "सः"
+      ],
+      "pred": [
+        "स"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-22",
+      "surface": "पशुनापि",
+      "type": "vowel",
+      "gold": [
+        "पशुना",
+        "अपि"
+      ],
+      "pred": [
+        "पशुन",
+        "अपि"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "पशुना",
+          "अपि"
+        ],
+        [
+          "पशुना",
+          "आपि"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-24",
+      "surface": "अनुक्तमप्यूहति",
+      "type": "multi",
+      "gold": [
+        "अनुक्तम्",
+        "अपि",
+        "ऊहति"
+      ],
+      "pred": [
+        "अनुक्तम्",
+        "अप्यूहति"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "अनुक्तम्",
+          "अपी",
+          "ऊहति"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-26",
+      "surface": "सानोरुपरि",
+      "type": "visarga",
+      "gold": [
+        "सानोः",
+        "उपरि"
+      ],
+      "pred": [
+        "सान",
+        "ऊरुपरि"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "सानोः",
+          "उपरि"
+        ],
+        [
+          "स",
+          "आना",
+          "ऊरुपरि"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-26",
+      "surface": "कञ्चनपुरं",
+      "type": "normalize",
+      "gold": [
+        "कञ्चनपुरम्"
+      ],
+      "pred": [
+        "कम्",
+        "चनपुरम्"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-27",
+      "surface": "श्रीमान्",
+      "type": "none",
+      "gold": [
+        "श्रीमान्"
+      ],
+      "pred": [
+        "श्रि",
+        "इमान्"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "श्रीमान्"
+        ],
+        [
+          "श्री",
+          "इमान्"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-28",
+      "surface": "कुलक्रमागतः",
+      "type": "none",
+      "gold": [
+        "कुलक्रमागतः"
+      ],
+      "pred": [
+        "कुलक्रम",
+        "आगतः"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "कुलक्रम",
+          "अगतः"
+        ],
+        [
+          "कुलक्रम्",
+          "आगतः"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-29",
+      "surface": "स",
+      "type": "visarga",
+      "gold": [
+        "सः"
+      ],
+      "pred": [
+        "स"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-29",
+      "surface": "तत्प्रसादात्",
+      "type": "consonant",
+      "gold": [
+        "तत्",
+        "प्रसादात्"
+      ],
+      "pred": [
+        "तत्प्रसादात्"
+      ],
+      "status": "compound",
+      "alternatives": [],
+      "members": [
+        "तत्",
+        "प्रसादात्"
+      ]
+    },
+    {
+      "split": "test",
+      "id": "TEST-29",
+      "surface": "बोधिसत्त्वांशसम्भवं",
+      "type": "normalize",
+      "gold": [
+        "बोधिसत्त्वांशसम्भवम्"
+      ],
+      "pred": [
+        "बोधिसत्त्व",
+        "अंशसम्भवम्"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "बोधिसत्त्व",
+          "अंशसम्",
+          "भवम्"
+        ],
+        [
+          "बोधिसत्त्वा",
+          "अंशसम्भवम्"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-30",
+      "surface": "स",
+      "type": "visarga",
+      "gold": [
+        "सः"
+      ],
+      "pred": [
+        "स"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-31",
+      "surface": "वित्तमेति",
+      "type": "boundary",
+      "gold": [
+        "वित्तम्",
+        "एति"
+      ],
+      "pred": [
+        "विद्तम्",
+        "एति"
+      ],
+      "status": "ambiguous",
+      "alternatives": [
+        [
+          "वित्तम्",
+          "एति"
+        ],
+        [
+          "विद्तम",
+          "इति"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-39",
+      "surface": "परोपकाराय",
+      "type": "vowel",
+      "gold": [
+        "पर",
+        "उपकाराय"
+      ],
+      "pred": [
+        "परा",
+        "उपकाराय"
+      ],
+      "status": "ambiguous",
+      "alternatives": [
+        [
+          "पर",
+          "उपकाराय"
+        ],
+        [
+          "परोपकाराय"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-41",
+      "surface": "पूर्वार्धपरार्धभिन्ना",
+      "type": "none",
+      "gold": [
+        "पूर्वार्धपरार्धभिन्ना"
+      ],
+      "pred": [
+        "पूर्व",
+        "अर्धपरार्धभिन्ना"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "पूर्व",
+          "अर्धपर",
+          "अर्धभिन्ना"
+        ],
+        [
+          "पूर्वार्धपर",
+          "अर्धभिन्ना"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "test",
+      "id": "TEST-43",
+      "surface": "रत्नसंज्ञा",
+      "type": "none",
+      "gold": [
+        "रत्नसंज्ञा"
+      ],
+      "pred": [
+        "रत्नसम्",
+        "ज्ञा"
+      ],
+      "status": "resolved",
+      "alternatives": [],
+      "members": []
     }
   ]
 }
