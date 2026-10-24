@@ -15,7 +15,7 @@ from app.models.schemas import (
     GrammarIssue,
 )
 from app.services.cache import SQLiteCache, get_cache
-from app.services.sandhi import SandhiService, get_sandhi_service
+from app.services.sandhi import SandhiService, get_sandhi_service, to_analyze_fields, health
 from app.services.morphology import MorphologyService, get_morphology_service
 from app.services.translation import TranslationService, get_translation_service
 from app.services.samasa import SamasaService, get_samasa_service
@@ -160,6 +160,11 @@ class OrchestratorService:
         if not bypass_cache:
             cached_data = self.cache.get(normalized)
             if cached_data is not None:
+                cached_trans = cached_data.get("translation", "")
+                if "offline mode" in cached_trans or "IndicTrans2 translation model" in cached_trans:
+                    logger.info(f"Invalidating stale offline translation cache for '{normalized}'.")
+                    cached_data = None
+            if cached_data is not None:
                 latency_ms = (time.perf_counter() - t0) * 1000
                 cached_data_copy = dict(cached_data)
                 cached_data_copy["cached"] = True
@@ -171,9 +176,10 @@ class OrchestratorService:
 
         # Step 2: Sandhi Splitting & Rule Identification (P3)
         sandhi_result = self.sandhi.split(normalized)
-        split_words = sandhi_result.split_words
-        all_sandhi_options = sandhi_result.all_candidates
-        sandhi_rules: List[SandhiRuleExplanation] = sandhi_result.rules
+        sandhi_fields = to_analyze_fields(sandhi_result)
+        split_words = sandhi_fields["sandhi_splits"]
+        all_sandhi_options = sandhi_fields["all_sandhi_options"]
+        sandhi_rules = sandhi_fields["sandhi_rules"]
 
         # Step 3: Morphological Analysis + Contextual Disambiguation (P1) + Upapada Rules (P2)
         raw_morph = [self.morphology.analyze_word(w) for w in split_words if w.strip()]
@@ -214,9 +220,6 @@ class OrchestratorService:
             original_text=raw_text,
             normalized_text=normalized,
             translation=translation,
-            sandhi_splits=split_words,
-            all_sandhi_options=all_sandhi_options,
-            sandhi_rules=sandhi_rules,
             morphology=morph_analyses,
             compounds=detected_compounds,
             karaka_relations=karaka_relations,
@@ -224,6 +227,7 @@ class OrchestratorService:
             grammar_warnings=grammar_warnings,
             cached=False,
             processing_time_ms=total_latency_ms,
+            **sandhi_fields,
         )
 
         # Step 9: Persist into Two-Tier Cache

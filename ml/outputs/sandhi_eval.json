@@ -1,0 +1,186 @@
+{
+  "report": {
+    "bench": {
+      "sentences": 15,
+      "tokens": 68,
+      "token_accuracy": 0.9853,
+      "sentence_exact": 0.9333,
+      "over_segmentation_rate": 0.0,
+      "missed_split_rate": 0.0625,
+      "word_precision": 0.9833,
+      "word_recall": 0.9733,
+      "word_f1": 0.9778,
+      "avg_ms_per_sentence": 458.5,
+      "accuracy_by_type": {
+        "boundary": {
+          "acc": 1.0,
+          "n": 1
+        },
+        "consonant": {
+          "acc": 0.667,
+          "n": 3
+        },
+        "multi": {
+          "acc": 1.0,
+          "n": 2
+        },
+        "none": {
+          "acc": 1.0,
+          "n": 32
+        },
+        "normalize": {
+          "acc": 1.0,
+          "n": 9
+        },
+        "plain-compound": {
+          "acc": 1.0,
+          "n": 6
+        },
+        "prefix-verb": {
+          "acc": 1.0,
+          "n": 2
+        },
+        "visarga": {
+          "acc": 1.0,
+          "n": 7
+        },
+        "vowel": {
+          "acc": 1.0,
+          "n": 6
+        }
+      },
+      "accuracy_by_status": {
+        "ambiguous": {
+          "acc": 1.0,
+          "n": 2
+        },
+        "compound": {
+          "acc": 1.0,
+          "n": 11
+        },
+        "resolved": {
+          "acc": 0.982,
+          "n": 55
+        }
+      },
+      "outcome_confusion": {
+        "intact->intact": 40,
+        "reconstruct->reconstruct": 12,
+        "split->intact": 1,
+        "split->split": 15
+      }
+    },
+    "dev": {
+      "sentences": 30,
+      "tokens": 63,
+      "token_accuracy": 0.9841,
+      "sentence_exact": 0.9667,
+      "over_segmentation_rate": 0.0,
+      "missed_split_rate": 0.0417,
+      "word_precision": 0.9833,
+      "word_recall": 0.9778,
+      "word_f1": 0.98,
+      "avg_ms_per_sentence": 77.4,
+      "accuracy_by_type": {
+        "boundary": {
+          "acc": 1.0,
+          "n": 3
+        },
+        "consonant": {
+          "acc": 1.0,
+          "n": 1
+        },
+        "multi": {
+          "acc": 1.0,
+          "n": 1
+        },
+        "none": {
+          "acc": 1.0,
+          "n": 31
+        },
+        "normalize": {
+          "acc": 1.0,
+          "n": 6
+        },
+        "prefix-verb": {
+          "acc": 1.0,
+          "n": 1
+        },
+        "visarga": {
+          "acc": 1.0,
+          "n": 11
+        },
+        "vowel": {
+          "acc": 0.889,
+          "n": 9
+        }
+      },
+      "accuracy_by_status": {
+        "ambiguous": {
+          "acc": 1.0,
+          "n": 2
+        },
+        "compound": {
+          "acc": 0.8,
+          "n": 5
+        },
+        "resolved": {
+          "acc": 1.0,
+          "n": 56
+        }
+      },
+      "outcome_confusion": {
+        "intact->intact": 32,
+        "reconstruct->reconstruct": 7,
+        "split->intact": 1,
+        "split->split": 23
+      }
+    }
+  },
+  "failures": [
+    {
+      "split": "bench",
+      "id": "NCERT-15",
+      "surface": "सदाचारः",
+      "type": "consonant",
+      "gold": [
+        "सत्",
+        "आचारः"
+      ],
+      "pred": [
+        "सदाचारः"
+      ],
+      "status": "resolved",
+      "alternatives": [
+        [
+          "सदा",
+          "आचारः"
+        ],
+        [
+          "सद",
+          "आचारः"
+        ]
+      ],
+      "members": []
+    },
+    {
+      "split": "dev",
+      "id": "DEV-16",
+      "surface": "हिमालयः",
+      "type": "vowel",
+      "gold": [
+        "हिम",
+        "आलयः"
+      ],
+      "pred": [
+        "हिमालयः"
+      ],
+      "status": "compound",
+      "alternatives": [],
+      "members": [
+        "हि",
+        "मालयः"
+      ]
+    }
+  ]
+}

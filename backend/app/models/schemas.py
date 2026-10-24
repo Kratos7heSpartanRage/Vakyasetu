@@ -26,6 +26,7 @@ class SandhiRuleExplanation(BaseModel):
     sutra: str = Field(..., description="Classical Paninian Ashtadhyayi Sutra (e.g. 'अकः सवर्णे दीर्घः ६.१.१०१')")
     sandhi_type: str = Field(..., description="Category: स्वरसन्धिः (Vowel), व्यञ्जनसन्धिः (Consonant), or विसर्गसन्धिः (Visarga)")
     explanation: str = Field(..., description="Student-friendly pedagogical explanation")
+    explanation_en: Optional[str] = Field(None, description="English version of the explanation (UI tooltip)")
 
 class SamasaAnalysis(BaseModel):
     """CBSE/NCERT Class 9-10 Samāsa (compound) decomposition."""
@@ -57,6 +58,25 @@ class SandhiSplitOption(BaseModel):
     """A single candidate sandhi split."""
     split_words: List[str] = Field(..., description="Ordered list of segmented tokens")
     confidence: float = Field(1.0, ge=0.0, le=1.0, description="Confidence score of this split")
+
+class SandhiJunctionInfo(BaseModel):
+    """One place inside a written token where sandhi was undone (or two words were written together)."""
+    left: str = Field(..., description="Left word, citation form")
+    right: str = Field(..., description="Right word, citation form")
+    changed: bool = Field(..., description="True if letters changed at this junction; False = words just written together")
+    rule: Optional[SandhiRuleExplanation] = Field(None, description="Pāṇinian rule; None when nothing changed")
+
+class SandhiTokenAnalysis(BaseModel):
+    """How one WRITTEN token was analysed. Drives the word chips, ambiguity flags and rule tooltips."""
+    surface: str = Field(..., description="The token exactly as the student typed it")
+    words: List[str] = Field(..., description="Resulting words in citation form (1 = not split)")
+    status: str = Field(..., description="resolved | ambiguous | compound | unattested | passthrough | unavailable")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Heuristic evidence level, NOT a calibrated probability")
+    evidence: List[str] = Field(default_factory=list, description="Why this answer was chosen (shown on hover)")
+    junctions: List[SandhiJunctionInfo] = Field(default_factory=list)
+    alternatives: List[List[str]] = Field(default_factory=list, description="Other plausible segmentations, best first")
+    compound_members: List[str] = Field(default_factory=list, description="Parts of a plain compound / prefixed verb kept whole")
+    warnings: List[str] = Field(default_factory=list)
 
 class AnalyzeRequest(BaseModel):
     """User request containing raw Sanskrit text."""
@@ -93,6 +113,10 @@ class AnalyzeResponse(BaseModel):
     sandhi_splits: List[str] = Field(..., description="Split words from Mayank's sandhi engine")
     all_sandhi_options: List[SandhiSplitOption] = Field(default_factory=list, description="Alternative sandhi segmentations")
     sandhi_rules: List[SandhiRuleExplanation] = Field(default_factory=list, description="Paninian sandhi sutras and rule names for split junctions")
+    sandhi_tokens: List[SandhiTokenAnalysis] = Field(default_factory=list, description="Granular per-token sandhi analysis")
+    sandhi_status: str = Field("resolved", description="resolved | ambiguous | unsplit")
+    sandhi_degraded: bool = Field(False, description="True if the sandhi backend was unavailable (results unverified)")
+    sandhi_warnings: List[str] = Field(default_factory=list, description="Warnings from sandhi engine")
     morphology: List[WordAnalysis] = Field(..., description="Word-level grammatical analysis from Shrinivas's engine")
     compounds: List[SamasaAnalysis] = Field(default_factory=list, description="Samāsa decompositions, classifications, and vigraha-vākya")
     karaka_relations: List[KarakaRelation] = Field(default_factory=list, description="Syntactic Kāraka dependencies and agreement links")

@@ -1106,7 +1106,10 @@ class SamasaService:
             return None
 
         from indic_transliteration import sanscript
-        from sanskrit_parser.base.sanskrit_base import SanskritNormalizedString
+        try:
+            from sanskrit_parser.base.sanskrit_base import SanskritNormalizedString
+        except (ImportError, ModuleNotFoundError):
+            SanskritNormalizedString = None
         from app.services.sandhi import get_sandhi_service
 
         sandhi_svc = get_sandhi_service()
