@@ -27,7 +27,7 @@ export default function Header({
         {/* Brand Lockup with Bridge Motif */}
         <div className="brand-lockup">
           <div className="brand-bridge-motif" aria-hidden="true">
-            <svg viewBox="0 0 48 24" width="38" height="20" fill="none" stroke="currentColor">
+            <svg viewBox="0 0 48 24" width="36" height="18" fill="none" stroke="currentColor">
               <path
                 d="M4,20 C14,6 34,6 44,20 M14,14 L14,20 M24,10 L24,20 M34,14 L34,20"
                 strokeWidth="2.2"
@@ -45,37 +45,43 @@ export default function Header({
           </div>
         </div>
 
-        {/* Global Controls: About Project, Calm Mode, Text Size, Day/Night */}
+        {/* Global Controls: Clean, Uncluttered, Separated Groups */}
         <div className="header-actions">
-          {/* About Project Button */}
+          {/* About Project Action Pill */}
           <button
             type="button"
             className="about-project-btn"
             onClick={onOpenAboutModal}
-            title="About VākyaSetu Project & Team"
+            title="About VākyaSetu Project & NLP Team"
             aria-label="About VākyaSetu Project & Team"
           >
             <span className="about-btn-icon" aria-hidden="true">ℹ️</span>
-            <span className="about-btn-text">प्रकल्प-परिचयः (About)</span>
+            <span className="about-btn-text">About Project</span>
           </button>
 
-          {/* Calm Mode Toggle Button */}
-          <button
-            type="button"
-            className={`calm-mode-btn ${calmMode ? 'is-calm' : ''}`}
-            onClick={onToggleCalmMode}
-            title={calmMode ? 'Enable dynamic motion' : 'Enable calm mode (no motion)'}
-            aria-pressed={calmMode}
-          >
-            <span className="calm-icon" aria-hidden="true">🍃</span>
-            <span className="calm-text">शालीनम् (Calm)</span>
-          </button>
+          {/* Elegant Divider between Project info and Display controls */}
+          <div className="header-divider" aria-hidden="true" />
 
-          {/* Text Size (A- / A+) */}
-          <TextSizeControl fontScale={fontScale} onScaleChange={onScaleChange} />
+          {/* User Display Controls Cluster */}
+          <div className="header-display-controls">
+            {/* Calm Mode Toggle Button */}
+            <button
+              type="button"
+              className={`calm-mode-btn ${calmMode ? 'is-calm' : ''}`}
+              onClick={onToggleCalmMode}
+              title={calmMode ? 'Enable floating handwritten letters' : 'Pause floating letters (Calm mode)'}
+              aria-pressed={calmMode}
+            >
+              <span className="calm-icon" aria-hidden="true">🍃</span>
+              <span className="calm-text">शालीनम्</span>
+            </button>
 
-          {/* Day / Night Theme Switch */}
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+            {/* Text Size (A- / A+) */}
+            <TextSizeControl fontScale={fontScale} onScaleChange={onScaleChange} />
+
+            {/* Day / Night Theme Switch */}
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          </div>
         </div>
       </div>
 

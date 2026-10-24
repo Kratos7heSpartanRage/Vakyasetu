@@ -1,39 +1,38 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
-const DEVANAGARI_GLYPHS = [
-  'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ऋ', 'ए', 'ऐ', 'ओ', 'क', 'ख', 
-  'ग', 'घ', 'च', 'ज', 'त', 'द', 'न', 'प', 'म', 'य', 'श', 'स', 'ह', 'ॐ'
+// Handwritten Hindi and Sanskrit letters & sacred words for school notebook background
+const HANDWRITTEN_GLYPHS = [
+  { id: 1, char: 'अ', x: 6, y: 12, size: 1.8, rot: -8, delay: 0, dx: 10, dy: -14 },
+  { id: 2, char: 'क', x: 22, y: 6, size: 1.5, rot: 6, delay: 1.4, dx: -8, dy: 10 },
+  { id: 3, char: 'ॐ', x: 88, y: 10, size: 2.2, rot: -4, delay: 2.1, dx: 12, dy: -8 },
+  { id: 4, char: 'इ', x: 74, y: 18, size: 1.4, rot: 5, delay: 0.7, dx: -10, dy: 12 },
+  { id: 5, char: 'म', x: 12, y: 28, size: 1.6, rot: -7, delay: 3.2, dx: 8, dy: -12 },
+  { id: 6, char: 'त', x: 92, y: 32, size: 1.5, rot: 7, delay: 1.8, dx: -12, dy: 10 },
+  { id: 7, char: 'ज्ञ', x: 5, y: 46, size: 1.8, rot: -9, delay: 2.6, dx: 10, dy: -10 },
+  { id: 8, char: 'र', x: 84, y: 45, size: 1.5, rot: 6, delay: 0.9, dx: -8, dy: 14 },
+  { id: 9, char: 'स', x: 16, y: 62, size: 1.6, rot: -5, delay: 3.5, dx: 12, dy: -8 },
+  { id: 10, char: 'श्री', x: 86, y: 60, size: 2.0, rot: 4, delay: 1.6, dx: -10, dy: 12 },
+  { id: 11, char: 'ह', x: 8, y: 78, size: 1.5, rot: -8, delay: 2.3, dx: 8, dy: -14 },
+  { id: 12, char: 'न', x: 80, y: 76, size: 1.5, rot: 8, delay: 3.7, dx: -12, dy: 10 },
+  { id: 13, char: 'ख', x: 28, y: 90, size: 1.4, rot: -4, delay: 1.1, dx: 10, dy: -10 },
+  { id: 14, char: 'प', x: 68, y: 86, size: 1.5, rot: 7, delay: 2.8, dx: -8, dy: 12 },
+  { id: 15, char: 'च', x: 38, y: 12, size: 1.4, rot: 5, delay: 1.5, dx: 12, dy: -8 },
+  { id: 16, char: 'य', x: 62, y: 10, size: 1.5, rot: -6, delay: 3.1, dx: -10, dy: 10 },
+  { id: 17, char: 'द', x: 24, y: 46, size: 1.4, rot: 6, delay: 0.8, dx: 8, dy: -12 },
+  { id: 18, char: 'भ', x: 72, y: 38, size: 1.5, rot: -8, delay: 2.0, dx: -12, dy: 8 },
+  { id: 19, char: 'ग', x: 32, y: 74, size: 1.5, rot: 4, delay: 3.4, dx: 10, dy: -12 },
+  { id: 20, char: 'ल', x: 64, y: 68, size: 1.5, rot: -5, delay: 1.3, dx: -8, dy: 10 },
+  { id: 21, char: 'व', x: 48, y: 90, size: 1.4, rot: 6, delay: 2.5, dx: 12, dy: -10 },
+  { id: 22, char: 'श', x: 48, y: 6, size: 1.5, rot: -4, delay: 0.6, dx: -10, dy: 8 },
+  { id: 23, char: 'विद्या', x: 90, y: 88, size: 1.8, rot: 5, delay: 2.9, dx: 10, dy: -12 },
+  { id: 24, char: 'सत्यम्', x: 10, y: 92, size: 1.8, rot: -6, delay: 1.7, dx: -12, dy: 10 }
 ];
 
 export default function LiveBackground({ calmMode }) {
-  const farLayerRef = useRef(null);
-  const midLayerRef = useRef(null);
-  const nearLayerRef = useRef(null);
-  const [stars, setStars] = useState([]);
-  const [motes, setMotes] = useState([]);
+  const notebookRef = useRef(null);
+  const lettersLayerRef = useRef(null);
 
-  // Generate stars and ink motes
-  useEffect(() => {
-    const starList = Array.from({ length: 28 }).map((_, i) => ({
-      id: i,
-      left: `${(i * 3.7 + 2) % 96}%`,
-      top: `${(i * 5.3 + 4) % 65}%`,
-      delay: `${(i * 0.35) % 5}s`,
-      duration: `${3.5 + (i % 4)}s`
-    }));
-    setStars(starList);
-
-    const moteList = Array.from({ length: 14 }).map((_, i) => ({
-      id: i,
-      left: `${(i * 7.1 + 5) % 92}%`,
-      top: `${(i * 9.3 + 12) % 85}%`,
-      delay: `${(i * 0.8) % 12}s`,
-      duration: `${14 + (i % 6) * 2}s`
-    }));
-    setMotes(moteList);
-  }, []);
-
-  // Parallax Pointer + Scroll Physics
+  // Parallax Pointer & Scroll Physics
   useEffect(() => {
     if (calmMode) return;
 
@@ -47,8 +46,8 @@ export default function LiveBackground({ calmMode }) {
     const handlePointerMove = (e) => {
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
       const ny = (e.clientY / window.innerHeight) * 2 - 1;
-      targetX = nx * 32; // Responsive 32px mouse shift
-      targetY = ny * 20;
+      targetX = nx * 14; // Subtle 14px tilt
+      targetY = ny * 10;
     };
 
     const handleScroll = () => {
@@ -57,22 +56,17 @@ export default function LiveBackground({ calmMode }) {
 
     const animate = () => {
       if (!document.hidden) {
-        currentX += (targetX - currentX) * 0.06;
-        currentY += (targetY - currentY) * 0.06;
+        currentX += (targetX - currentX) * 0.05;
+        currentY += (targetY - currentY) * 0.05;
 
-        // Far layer moves gently with scroll
-        if (farLayerRef.current) {
-          farLayerRef.current.style.transform = `translate3d(0, ${(scrollY * 0.08).toFixed(1)}px, 0)`;
+        // Ruled notebook sheet subtly responds to scroll
+        if (notebookRef.current) {
+          notebookRef.current.style.transform = `translate3d(0, ${(scrollY * 0.04).toFixed(1)}px, 0)`;
         }
 
-        // Mid glyph layer moves with mouse tilt and counter-scrolls
-        if (midLayerRef.current) {
-          midLayerRef.current.style.transform = `translate3d(${currentX.toFixed(1)}px, ${(currentY - scrollY * 0.12).toFixed(1)}px, 0)`;
-        }
-
-        // Near layer shifts subtly
-        if (nearLayerRef.current) {
-          nearLayerRef.current.style.transform = `translate3d(0, ${(-scrollY * 0.04).toFixed(1)}px, 0)`;
+        // Floating handwritten letters respond to mouse tilt and scroll parallax
+        if (lettersLayerRef.current) {
+          lettersLayerRef.current.style.transform = `translate3d(${currentX.toFixed(1)}px, ${(currentY - scrollY * 0.06).toFixed(1)}px, 0)`;
         }
       }
 
@@ -91,76 +85,37 @@ export default function LiveBackground({ calmMode }) {
   }, [calmMode]);
 
   return (
-    <div className="living-background" aria-hidden="true">
-      {/* Far Layer: Ruled notebook grid with scroll-linked movement */}
-      <div className="bg-layer-far" ref={farLayerRef} />
-      <div className="bg-notebook-margin-line" />
+    <div className={`living-background ${calmMode ? 'is-calm' : ''}`} aria-hidden="true">
+      {/* 1. Hindi Notebook Ruled Sheet (Horizontal lines only, like school copy) */}
+      <div className="bg-notebook-sheet" ref={notebookRef} />
 
-      {/* Mid Layer: Dynamic Drifting Devanagari Letters */}
-      <div className="bg-layer-mid" ref={midLayerRef}>
-        {DEVANAGARI_GLYPHS.map((glyph, idx) => {
-          const leftPercent = 4 + (idx * 3.8) % 92;
-          const delaySec = (idx * 1.9) % 24;
-          const durationSec = 18 + (idx % 5) * 3;
-          return (
-            <span
-              key={idx}
-              className="floating-glyph"
-              style={{
-                left: `${leftPercent}%`,
-                animationDelay: `-${delaySec}s`,
-                animationDuration: `${durationSec}s`
-              }}
-            >
-              {glyph}
-            </span>
-          );
-        })}
+      {/* 2. Red Student Notebook Margins (Classic double margin down left, plus top header rule) */}
+      <div className="bg-notebook-margin-double" />
+      <div className="bg-notebook-top-margin" />
 
-        {/* Ambient floating ink motes */}
-        {motes.map((m) => (
-          <div
-            key={m.id}
-            className="ambient-ink-mote"
+      {/* 3. Floating Handwritten Hindi & Sanskrit Letters */}
+      <div className="bg-handwritten-layer" ref={lettersLayerRef}>
+        {HANDWRITTEN_GLYPHS.map((g) => (
+          <span
+            key={g.id}
+            className="handwritten-floating-letter"
             style={{
-              left: m.left,
-              top: m.top,
-              animationDelay: `-${m.delay}`,
-              animationDuration: m.duration
+              left: `${g.x}%`,
+              top: `${g.y}%`,
+              fontSize: `${g.size}rem`,
+              '--base-rot': `${g.rot}deg`,
+              '--float-x': `${g.dx}px`,
+              '--float-y': `${g.dy}px`,
+              animationDelay: `-${g.delay}s`
             }}
-          />
+          >
+            {g.char}
+          </span>
         ))}
       </div>
 
-      {/* Near Layer: Atmospheric Glows & Paper-Cut Hills */}
-      <div className="bg-layer-near" ref={nearLayerRef}>
-        <div className="sunrise-glow" />
-        <div className="lamp-glow" />
-
-        {/* Night Twinkling Stars */}
-        {stars.map((s) => (
-          <div
-            key={s.id}
-            className="star-particle"
-            style={{
-              left: s.left,
-              top: s.top,
-              animationDelay: s.delay,
-              animationDuration: s.duration
-            }}
-          />
-        ))}
-
-        {/* Paper-cut hills silhouette at bottom */}
-        <svg
-          className="paper-cut-silhouette"
-          viewBox="0 0 1440 140"
-          preserveAspectRatio="none"
-          fill="currentColor"
-        >
-          <path d="M0,75 C260,120 520,35 780,85 C1040,130 1260,60 1440,95 L1440,140 L0,140 Z" />
-        </svg>
-      </div>
+      {/* 4. Subtle Ambient Warmth Gradient */}
+      <div className="bg-paper-warmth-glow" />
     </div>
   );
 }

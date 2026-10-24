@@ -172,7 +172,7 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-10);
+  gap: var(--space-16);
   flex-wrap: wrap;
 }
 
@@ -180,49 +180,70 @@
 .about-project-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-10);
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-14);
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 600;
   color: var(--color-accent);
   background: var(--color-accent-subtle);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .about-project-btn:hover {
   background: var(--color-accent);
   color: #FFFDF8;
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(181, 83, 47, 0.25);
+  box-shadow: 0 4px 12px rgba(181, 83, 47, 0.28);
 }
 
 .about-project-btn:active {
   transform: translateY(0) scale(0.97);
 }
 
+.about-btn-icon {
+  font-size: 0.95rem;
+}
+
+/* Elegant separator between project pill and display preferences */
+.header-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border-paper);
+  opacity: 0.85;
+}
+
+/* Group for Calm Mode, Text Size, Day/Night Theme */
+.header-display-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
 /* Calm Mode Button */
 .calm-mode-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-10);
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-12);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--text-ink-secondary);
   background: transparent;
   border: 1px solid var(--border-paper);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
 }
 
 .calm-mode-btn:hover {
   background: var(--bg-paper-lift);
   color: var(--text-ink);
+  border-color: var(--color-accent);
   transform: translateY(-1px);
 }
 
@@ -558,17 +579,17 @@
 .examples-section {
   display: flex;
   align-items: center;
-  gap: var(--space-12);
-  margin-bottom: var(--space-32);
+  gap: var(--space-16);
+  margin-bottom: var(--space-28);
   flex-wrap: wrap;
 }
 
 .examples-header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-6);
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-ink-secondary);
 }
@@ -576,7 +597,7 @@
 .examples-scroll-row {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-10);
   flex-wrap: wrap;
 }
 

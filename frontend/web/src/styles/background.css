@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Live Living Wallpaper Background (Dynamic & Engaging Parallax)
+   Hindi School Notebook Ruled Background & Floating Handwritten Letters
    ========================================================================== */
 
 .living-background {
@@ -14,209 +14,153 @@
   transition: var(--transition-theme);
 }
 
-/* Layer 1: Far Layer - Faint Ruled Grid with Scroll Parallax */
-.bg-layer-far {
+/* --------------------------------------------------------------------------
+   1. Authentic Hindi School Notebook Rulings (Horizontal Lines Only)
+   -------------------------------------------------------------------------- */
+.bg-notebook-sheet {
   position: absolute;
-  top: -100px;
+  top: -80px;
   left: 0;
   right: 0;
-  bottom: -100px;
-  background-image: 
-    linear-gradient(var(--line-ruled) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line-ruled) 1px, transparent 1px);
-  background-size: 36px 36px;
-  opacity: 0.85;
-  transition: opacity 400ms ease;
+  bottom: -80px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 31px,
+    var(--line-ruled) 31px,
+    var(--line-ruled) 32px
+  );
+  background-size: 100% 32px;
+  opacity: 0.95;
   will-change: transform;
 }
 
-/* Red Notebook Margin Guide */
-.bg-notebook-margin-line {
+/* --------------------------------------------------------------------------
+   2. Classic Double Red Margin Down the Left Side
+   -------------------------------------------------------------------------- */
+.bg-notebook-margin-double {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: clamp(24px, 6vw, 90px);
-  width: 2px;
+  left: clamp(40px, 5.5vw, 76px);
+  width: 8px;
+  pointer-events: none;
+}
+
+.bg-notebook-margin-double::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1.5px;
   background: var(--line-margin);
   opacity: 0.85;
 }
 
-/* Layer 2: Mid Layer - Dynamic Drifting Devanagari Letters */
-.bg-layer-mid {
+.bg-notebook-margin-double::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 1px;
+  background: var(--line-margin);
+  opacity: 0.65;
+}
+
+/* Red Notebook Header Rule (where Date / Page No. is written in copybooks) */
+.bg-notebook-top-margin {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: var(--line-margin);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. Floating Handwritten Hindi & Sanskrit Letters
+   -------------------------------------------------------------------------- */
+.bg-handwritten-layer {
   position: absolute;
   inset: 0;
   will-change: transform;
+  pointer-events: none;
 }
 
-.floating-glyph {
+.handwritten-floating-letter {
   position: absolute;
-  font-family: var(--font-display);
-  font-size: clamp(2.4rem, 5.5vw, 5rem);
+  font-family: var(--font-margin);
+  font-weight: 400;
   color: var(--text-ink);
-  opacity: 0.12;
+  opacity: 0.22;
   user-select: none;
+  pointer-events: none;
   line-height: 1;
-  animation: driftGlyph 22s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  will-change: transform, opacity;
-  filter: blur(0.3px);
-  text-shadow: 0 0 12px rgba(229, 178, 93, 0.15);
+  will-change: transform;
+  animation: floatHandwritten 12s ease-in-out infinite alternate;
+  transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg));
+  transition: opacity 300ms ease;
 }
 
-[data-theme="night"] .floating-glyph {
-  opacity: 0.18;
+[data-theme="night"] .handwritten-floating-letter {
+  opacity: 0.28;
   color: var(--color-accent);
-  text-shadow: 0 0 16px rgba(229, 178, 93, 0.28);
+  text-shadow: 0 0 8px rgba(229, 178, 93, 0.22);
 }
 
-@keyframes driftGlyph {
+@keyframes floatHandwritten {
   0% {
-    transform: translateY(105vh) translateX(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(75vh) translateX(12px) rotate(4deg);
+    transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg));
   }
   50% {
-    transform: translateY(45vh) translateX(-8px) rotate(-3deg);
-  }
-  75% {
-    transform: translateY(15vh) translateX(10px) rotate(6deg);
+    transform: translate3d(var(--float-x, 8px), var(--float-y, -12px), 0) rotate(calc(var(--base-rot, 0deg) + 3deg));
   }
   100% {
-    transform: translateY(-15vh) translateX(0) rotate(-4deg);
+    transform: translate3d(calc(var(--float-x, 8px) * -0.6), calc(var(--float-y, -12px) * -0.8), 0) rotate(calc(var(--base-rot, 0deg) - 2deg));
   }
 }
 
-/* Floating Ambient Dust / Ink Mote Particles */
-.ambient-ink-mote {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  opacity: 0.25;
-  animation: floatMote 16s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes floatMote {
-  0%, 100% {
-    transform: translateY(0) translateX(0);
-    opacity: 0.1;
-  }
-  50% {
-    transform: translateY(-80px) translateX(30px);
-    opacity: 0.45;
-  }
-}
-
-/* Layer 3: Near Layer - Atmospheric Radiance & Glows */
-.bg-layer-near {
+/* --------------------------------------------------------------------------
+   4. Ambient Paper Warmth & Lamp Glow
+   -------------------------------------------------------------------------- */
+.bg-paper-warmth-glow {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  will-change: transform;
+  background: radial-gradient(
+    circle at 50% 30%,
+    rgba(242, 214, 117, 0.08) 0%,
+    transparent 65%
+  );
+  transition: opacity 400ms ease;
 }
 
-/* Day: Soft Morning Sunrise Radiance */
-.sunrise-glow {
-  position: absolute;
-  top: -120px;
-  right: -80px;
-  width: 720px;
-  height: 720px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(229, 178, 93, 0.28) 0%, rgba(181, 83, 47, 0.12) 45%, transparent 75%);
-  filter: blur(50px);
-  animation: pulseGlow 10s ease-in-out infinite alternate;
-  transition: opacity 500ms ease;
+[data-theme="night"] .bg-paper-warmth-glow {
+  background: radial-gradient(
+    circle at 50% 25%,
+    rgba(229, 178, 93, 0.06) 0%,
+    transparent 70%
+  );
 }
 
-/* Night: Warm Lamp Radiance Behind Content */
-.lamp-glow {
-  position: absolute;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 550px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(229, 178, 93, 0.22) 0%, rgba(181, 83, 47, 0.08) 55%, transparent 80%);
-  filter: blur(70px);
-  opacity: 0;
-  animation: flickerLamp 8s ease-in-out infinite alternate;
-  transition: opacity 500ms ease;
-}
-
-[data-theme="night"] .sunrise-glow {
-  opacity: 0;
-}
-
-[data-theme="night"] .lamp-glow {
-  opacity: 1;
-}
-
-@keyframes pulseGlow {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  100% { transform: scale(1.08); opacity: 1; }
-}
-
-@keyframes flickerLamp {
-  0% { transform: translateX(-50%) scale(0.96); opacity: 0.85; }
-  50% { transform: translateX(-50%) scale(1.02); opacity: 1; }
-  100% { transform: translateX(-50%) scale(0.98); opacity: 0.92; }
-}
-
-/* Night: Twinkling Star Field */
-.star-particle {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background-color: #ECE6D6;
-  border-radius: 50%;
-  opacity: 0;
-  animation: twinkle 5s ease-in-out infinite;
-  box-shadow: 0 0 6px #ECE6D6;
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.05; transform: scale(0.6); }
-  50% { opacity: 0.65; transform: scale(1.4); }
-}
-
-/* Paper-Cut Hills Silhouette */
-.paper-cut-silhouette {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 140px;
-  opacity: 0.09;
-  color: var(--text-ink);
-  transition: color 400ms ease, opacity 400ms ease;
-}
-
-[data-theme="night"] .paper-cut-silhouette {
-  opacity: 0.22;
-  color: #06070B;
-}
-
-/* Calm Mode & Prefers-Reduced-Motion */
-body.calm-mode .floating-glyph,
-body.calm-mode .star-particle,
-body.calm-mode .ambient-ink-mote,
-body.calm-mode .sunrise-glow,
-body.calm-mode .lamp-glow {
+/* --------------------------------------------------------------------------
+   Calm Mode & Reduced Motion
+   -------------------------------------------------------------------------- */
+.living-background.is-calm .handwritten-floating-letter {
   animation: none !important;
-  transform: none !important;
+  transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg)) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .floating-glyph,
-  .star-particle,
-  .ambient-ink-mote,
-  .sunrise-glow,
-  .lamp-glow {
+  .handwritten-floating-letter {
     animation: none !important;
-    transform: none !important;
+    transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg)) !important;
+  }
+  .bg-notebook-sheet {
+    will-change: auto;
   }
 }
