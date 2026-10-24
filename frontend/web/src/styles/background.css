@@ -1,0 +1,168 @@
+/* ==========================================================================
+   Live Living Wallpaper Background (Subtle Nostalgic Notebook)
+   ========================================================================== */
+
+.living-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  transition: var(--transition-theme);
+}
+
+/* Layer 1: Far Layer - Faint Ruled Grid */
+.bg-layer-far {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--line-ruled) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-ruled) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.75;
+  transition: opacity 400ms ease;
+}
+
+/* Red Margin Line on the left side of the paper canvas */
+.bg-notebook-margin-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: clamp(24px, 6vw, 80px);
+  width: 1.5px;
+  background: var(--line-margin);
+  opacity: 0.8;
+}
+
+/* Layer 2: Mid Layer - Drifting Devanagari Letters */
+.bg-layer-mid {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.floating-glyph {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  color: var(--text-ink);
+  opacity: 0.05;
+  user-select: none;
+  line-height: 1;
+  animation: driftGlyph 38s linear infinite;
+  will-change: transform, opacity;
+}
+
+[data-theme="night"] .floating-glyph {
+  opacity: 0.06;
+  color: var(--color-accent);
+}
+
+@keyframes driftGlyph {
+  0% {
+    transform: translateY(105vh) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-15vh) rotate(15deg);
+  }
+}
+
+/* Layer 3: Near Layer - Atmospheric Glows (Sunrise / Lamp Glow) */
+.bg-layer-near {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Day: Soft Morning Sunrise Glow */
+.sunrise-glow {
+  position: absolute;
+  top: -150px;
+  right: -100px;
+  width: 650px;
+  height: 650px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229, 178, 93, 0.18) 0%, rgba(181, 83, 47, 0.06) 50%, transparent 70%);
+  filter: blur(40px);
+  transition: opacity 500ms ease;
+}
+
+/* Night: Warm Lamp Glow Behind Hero Area */
+.lamp-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(229, 178, 93, 0.12) 0%, rgba(181, 83, 47, 0.03) 60%, transparent 80%);
+  filter: blur(60px);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+[data-theme="night"] .sunrise-glow {
+  opacity: 0;
+}
+
+[data-theme="night"] .lamp-glow {
+  opacity: 1;
+}
+
+/* Night: Distant Twinkling Stars */
+.star-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: #ECE6D6;
+  border-radius: 50%;
+  opacity: 0;
+  animation: twinkle 6s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  50% { opacity: 0.35; transform: scale(1.2); }
+}
+
+/* Bottom Paper-Cut Hills Silhouette */
+.paper-cut-silhouette {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  opacity: 0.08;
+  color: var(--text-ink);
+  transition: color 400ms ease, opacity 400ms ease;
+}
+
+[data-theme="night"] .paper-cut-silhouette {
+  opacity: 0.15;
+  color: #06070B;
+}
+
+/* Calm Mode & Prefers-Reduced-Motion */
+body.calm-mode .floating-glyph,
+body.calm-mode .star-particle {
+  animation: none !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-glyph {
+    animation: none !important;
+    transform: none !important;
+  }
+  .star-particle {
+    animation: none !important;
+    opacity: 0.2 !important;
+  }
+  .bg-layer-mid {
+    transform: none !important;
+  }
+}
