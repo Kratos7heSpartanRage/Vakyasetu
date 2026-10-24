@@ -139,9 +139,13 @@ Bible-style English ("And behold… unto…"), and one sentence got worse.
 
 ### What we learned
 
-- **About 8% of Sāmayik is Bible text** (3,511 training rows contain King-James words such as "unto" and
-  "behold"). The fine-tuned model reproduces that style on story-like sentences, which is a poor fit for
-  school textbooks.
+- **Sāmayik mixes very different text.** Per its own README, the main data (48,326 sentences) is about
+  half Spoken Tutorials (software lessons, 23,835 pairs), plus NIOS school content (11,356), a Bible
+  translation from 1851 (7,838, about 16%) and Gitasopanam (5,885). Only part of it resembles a school
+  textbook.
+- **The Bible text leaks into the output.** Our word-list check flagged 3,511 training rows (8.2%) containing
+  King-James words such as "unto" and "behold", which catches only part of the Bible text. The fine-tuned model
+  reproduces that style on story-like sentences, which is a poor fit for school textbooks.
 - **Removing those rows did not help in our first attempt.** That model ("run 3") stopped early at step 2000
   because dev BLEU peaked at step 500, and it scored lower on the test split (24.1 vs 26.3 BLEU on modern
   references). The comparison is unfair, because that run saw far less training. A rerun that picks its
@@ -250,7 +254,8 @@ Run it once only. Reinstalling the toolkit removes the patch.
 - [ ] Sandhi splitting and morphological gloss modules
 - [ ] Backend that merges the three outputs, and the web interface
 - [ ] A larger NCERT test set (50–100 sentences) with references checked by a Sanskrit reader
-- [ ] A fair rerun of the Bible-filtered training, selecting the checkpoint by dev loss
+- [ ] A fair rerun of the Bible-filtered training, selecting the checkpoint by dev loss and identifying the
+  Bible rows exactly with the per-corpus files in the Sāmayik repository (instead of a word list)
 - [ ] Evaluate on the out-of-domain test split (radio talks)
 - [ ] Try sandhi-aware translation, and more LoRA target modules
 
@@ -274,5 +279,9 @@ Run it once only. Reinstalling the toolkit removes the patch.
 
 ## 📄 License
 
-To be decided by the team (MIT is a common choice for student projects). Check the Sāmayik repository's
-terms before redistributing the dataset or weights trained on it.
+To be decided by the team (MIT is a common choice for student projects).
+
+**Data:** this repository does not include the Sāmayik data; the scripts download it from Hugging Face. We
+could not find a license in the Sāmayik repository, and its sources (a Bible translation, NIOS materials,
+Spoken Tutorials, Gitasopanam and others) have their own terms, so do not redistribute the data. Check the
+dataset page before publishing weights trained on it.
