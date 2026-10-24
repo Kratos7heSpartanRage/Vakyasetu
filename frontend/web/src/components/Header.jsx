@@ -10,27 +10,27 @@ export default function Header({
   calmMode,
   onToggleCalmMode,
   activeTab,
-  onSelectTab
+  onSelectTab,
+  onOpenAboutModal
 }) {
   const tabs = [
     { id: 'analyse', label: 'विश्लेषणम् (Analyse)' },
     { id: 'practice', label: 'अभ्यासः (Practice)' },
     { id: 'library', label: 'ग्रन्थालयः (NCERT Library)' },
     { id: 'guide', label: 'सन्धि-निर्देशिका (Sandhi Guide)' },
-    { id: 'about', label: 'परिचयः (About)' }
+    { id: 'about', label: 'परिचयः (About Us)' }
   ];
 
   return (
     <header className="site-header">
       <div className="header-top-bar">
-        {/* Wordmark with Custom Bridge Motif */}
+        {/* Brand Lockup with Bridge Motif */}
         <div className="brand-lockup">
           <div className="brand-bridge-motif" aria-hidden="true">
-            {/* Elegant arch bridge linking the words */}
-            <svg viewBox="0 0 48 24" width="36" height="18" fill="none" stroke="currentColor">
+            <svg viewBox="0 0 48 24" width="38" height="20" fill="none" stroke="currentColor">
               <path
                 d="M4,20 C14,6 34,6 44,20 M14,14 L14,20 M24,10 L24,20 M34,14 L34,20"
-                strokeWidth="2"
+                strokeWidth="2.2"
                 strokeLinecap="round"
               />
             </svg>
@@ -45,14 +45,26 @@ export default function Header({
           </div>
         </div>
 
-        {/* Global Controls: Calm Mode, Text Size, Day/Night */}
+        {/* Global Controls: About Project, Calm Mode, Text Size, Day/Night */}
         <div className="header-actions">
+          {/* About Project Button */}
+          <button
+            type="button"
+            className="about-project-btn"
+            onClick={onOpenAboutModal}
+            title="About VākyaSetu Project & Team"
+            aria-label="About VākyaSetu Project & Team"
+          >
+            <span className="about-btn-icon" aria-hidden="true">ℹ️</span>
+            <span className="about-btn-text">प्रकल्प-परिचयः (About)</span>
+          </button>
+
           {/* Calm Mode Toggle Button */}
           <button
             type="button"
             className={`calm-mode-btn ${calmMode ? 'is-calm' : ''}`}
             onClick={onToggleCalmMode}
-            title={calmMode ? 'Enable subtle motion' : 'Enable calm mode (no motion)'}
+            title={calmMode ? 'Enable dynamic motion' : 'Enable calm mode (no motion)'}
             aria-pressed={calmMode}
           >
             <span className="calm-icon" aria-hidden="true">🍃</span>

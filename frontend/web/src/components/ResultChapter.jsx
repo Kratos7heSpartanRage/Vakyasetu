@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import TranslationBlock from './TranslationBlock';
 import SandhiStrip from './SandhiStrip';
 import MorphologyCards from './MorphologyCards';
@@ -10,6 +10,30 @@ export default function ResultChapter({
   onSelectWord,
   onSelectAlternative
 }) {
+  // Scroll Reveal Intersection Observer
+  useEffect(() => {
+    if (!analysis) return;
+
+    const revealElements = document.querySelectorAll('.scroll-reveal');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+          }
+        });
+      },
+      {
+        threshold: 0.06,
+        rootMargin: '0px 0px -30px 0px'
+      }
+    );
+
+    revealElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [analysis]);
+
   if (!analysis) return null;
 
   const {
@@ -27,13 +51,13 @@ export default function ResultChapter({
   return (
     <article className="result-chapter-container" aria-live="polite">
       {/* Chapter Title & Provenance Strip */}
-      <div className="chapter-header-bar">
+      <div className="chapter-header-bar scroll-reveal is-revealed">
         <div className="chapter-title-group">
           <span className="chapter-rubric" lang="sa">अध्यायः १</span>
           <h2 className="chapter-main-title">वाक्य-विश्लेषण-परिणामः (Analysis Results)</h2>
         </div>
 
-        {/* Real latency & cache indicator (No marketing claims) */}
+        {/* Real latency & cache indicator */}
         <div className="chapter-meta-pills">
           {processing_time_ms !== undefined && (
             <span className="meta-pill latency-pill">
@@ -54,31 +78,37 @@ export default function ResultChapter({
       )}
 
       {/* Section 1: English Translation */}
-      <TranslationBlock translation={translation} />
+      <div className="scroll-reveal">
+        <TranslationBlock translation={translation} />
+      </div>
 
-      <hr className="textbook-divider-rule" aria-hidden="true" />
+      <hr className="textbook-divider-rule scroll-reveal" aria-hidden="true" />
 
       {/* Section 2: Sandhi-viccheda (Centrepiece) */}
-      <SandhiStrip
-        tokens={sandhi_tokens}
-        rules={sandhi_rules}
-        splitWords={sandhi_splits}
-        selectedWord={selectedWord}
-        onSelectWord={onSelectWord}
-        onSelectAlternative={onSelectAlternative}
-      />
+      <div className="scroll-reveal">
+        <SandhiStrip
+          tokens={sandhi_tokens}
+          rules={sandhi_rules}
+          splitWords={sandhi_splits}
+          selectedWord={selectedWord}
+          onSelectWord={onSelectWord}
+          onSelectAlternative={onSelectAlternative}
+        />
+      </div>
 
-      <hr className="textbook-divider-rule" aria-hidden="true" />
+      <hr className="textbook-divider-rule scroll-reveal" aria-hidden="true" />
 
       {/* Section 3: Morphology Breakdown */}
-      <MorphologyCards
-        morphology={morphology}
-        selectedWord={selectedWord}
-        onSelectWord={onSelectWord}
-      />
+      <div className="scroll-reveal">
+        <MorphologyCards
+          morphology={morphology}
+          selectedWord={selectedWord}
+          onSelectWord={onSelectWord}
+        />
+      </div>
 
       {/* Chapter Footer: Honest Scope Note */}
-      <footer className="chapter-footer-note">
+      <footer className="chapter-footer-note scroll-reveal">
         <div className="footer-scope-box">
           <span className="quill-tag" aria-hidden="true">✎</span>
           <p className="scope-text">

@@ -22,6 +22,7 @@ export default function TokenSlip({
     <div
       className={`token-slip-card ${isSplit ? 'is-split-token' : 'is-intact-token'} ${isRuleActive ? 'rule-cross-highlight' : ''}`}
       id={`token-slip-${tokenIndex}`}
+      style={{ '--delay-index': tokenIndex % 8 }}
     >
       {/* Written Surface Form on Top */}
       <div className="token-surface-wrapper">

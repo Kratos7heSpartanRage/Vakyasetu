@@ -7,6 +7,7 @@ import ResultChapter from './components/ResultChapter';
 import EmptyState from './components/EmptyState';
 import ErrorState from './components/ErrorState';
 import PlaceholderPage from './components/PlaceholderPage';
+import AboutModal from './components/AboutModal';
 import { BOOKMARK_EXAMPLES } from './config/examples';
 import { MOCK_RESOLVED } from './config/mockData';
 
@@ -17,6 +18,7 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
   const [selectedWord, setSelectedWord] = useState(null);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
 
   // Theme Management (Day "Paper" vs Night "Lamp")
   const [theme, setTheme] = useState(() => {
@@ -118,7 +120,6 @@ export default function App() {
       setAnalysis(data);
     } catch (err) {
       console.warn("Live API fetch notice (using verified local fallback):", err.message);
-      // If backend is offline during frontend design testing, load verified mock analysis
       if (!analysis) {
         setAnalysis(MOCK_RESOLVED);
       } else {
@@ -157,7 +158,7 @@ export default function App() {
 
   return (
     <div className="vakyasetu-app-root">
-      {/* 1. Live Ambient Wallpaper Background */}
+      {/* 1. Live Ambient Wallpaper Background with Scroll Parallax */}
       <LiveBackground calmMode={calmMode} />
 
       {/* 2. Main Paper Notebook Card */}
@@ -173,6 +174,7 @@ export default function App() {
             onToggleCalmMode={handleToggleCalmMode}
             activeTab={activeTab}
             onSelectTab={setActiveTab}
+            onOpenAboutModal={() => setAboutModalOpen(true)}
           />
 
           {/* Tab Content Display */}
@@ -212,11 +214,17 @@ export default function App() {
                 )}
               </div>
             ) : (
-              <PlaceholderPage tabId={activeTab} />
+              <PlaceholderPage tabId={activeTab} onOpenAboutModal={() => setAboutModalOpen(true)} />
             )}
           </main>
         </div>
       </div>
+
+      {/* 3. About Project & Team Modal */}
+      <AboutModal
+        isOpen={aboutModalOpen}
+        onClose={() => setAboutModalOpen(false)}
+      />
     </div>
   );
 }

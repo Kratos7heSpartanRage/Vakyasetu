@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Live Living Wallpaper Background (Subtle Nostalgic Notebook)
+   Live Living Wallpaper Background (Dynamic & Engaging Parallax)
    ========================================================================== */
 
 .living-background {
@@ -14,30 +14,34 @@
   transition: var(--transition-theme);
 }
 
-/* Layer 1: Far Layer - Faint Ruled Grid */
+/* Layer 1: Far Layer - Faint Ruled Grid with Scroll Parallax */
 .bg-layer-far {
   position: absolute;
-  inset: 0;
+  top: -100px;
+  left: 0;
+  right: 0;
+  bottom: -100px;
   background-image: 
     linear-gradient(var(--line-ruled) 1px, transparent 1px),
     linear-gradient(90deg, var(--line-ruled) 1px, transparent 1px);
-  background-size: 32px 32px;
-  opacity: 0.75;
+  background-size: 36px 36px;
+  opacity: 0.85;
   transition: opacity 400ms ease;
+  will-change: transform;
 }
 
-/* Red Margin Line on the left side of the paper canvas */
+/* Red Notebook Margin Guide */
 .bg-notebook-margin-line {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: clamp(24px, 6vw, 80px);
-  width: 1.5px;
+  left: clamp(24px, 6vw, 90px);
+  width: 2px;
   background: var(--line-margin);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
-/* Layer 2: Mid Layer - Drifting Devanagari Letters */
+/* Layer 2: Mid Layer - Dynamic Drifting Devanagari Letters */
 .bg-layer-mid {
   position: absolute;
   inset: 0;
@@ -47,61 +51,99 @@
 .floating-glyph {
   position: absolute;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-size: clamp(2.4rem, 5.5vw, 5rem);
   color: var(--text-ink);
-  opacity: 0.05;
+  opacity: 0.12;
   user-select: none;
   line-height: 1;
-  animation: driftGlyph 38s linear infinite;
+  animation: driftGlyph 22s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   will-change: transform, opacity;
+  filter: blur(0.3px);
+  text-shadow: 0 0 12px rgba(229, 178, 93, 0.15);
 }
 
 [data-theme="night"] .floating-glyph {
-  opacity: 0.06;
+  opacity: 0.18;
   color: var(--color-accent);
+  text-shadow: 0 0 16px rgba(229, 178, 93, 0.28);
 }
 
 @keyframes driftGlyph {
   0% {
-    transform: translateY(105vh) rotate(0deg);
+    transform: translateY(105vh) translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(75vh) translateX(12px) rotate(4deg);
+  }
+  50% {
+    transform: translateY(45vh) translateX(-8px) rotate(-3deg);
+  }
+  75% {
+    transform: translateY(15vh) translateX(10px) rotate(6deg);
   }
   100% {
-    transform: translateY(-15vh) rotate(15deg);
+    transform: translateY(-15vh) translateX(0) rotate(-4deg);
   }
 }
 
-/* Layer 3: Near Layer - Atmospheric Glows (Sunrise / Lamp Glow) */
+/* Floating Ambient Dust / Ink Mote Particles */
+.ambient-ink-mote {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  opacity: 0.25;
+  animation: floatMote 16s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes floatMote {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translateY(-80px) translateX(30px);
+    opacity: 0.45;
+  }
+}
+
+/* Layer 3: Near Layer - Atmospheric Radiance & Glows */
 .bg-layer-near {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  will-change: transform;
 }
 
-/* Day: Soft Morning Sunrise Glow */
+/* Day: Soft Morning Sunrise Radiance */
 .sunrise-glow {
   position: absolute;
-  top: -150px;
-  right: -100px;
-  width: 650px;
-  height: 650px;
+  top: -120px;
+  right: -80px;
+  width: 720px;
+  height: 720px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(229, 178, 93, 0.18) 0%, rgba(181, 83, 47, 0.06) 50%, transparent 70%);
-  filter: blur(40px);
+  background: radial-gradient(circle, rgba(229, 178, 93, 0.28) 0%, rgba(181, 83, 47, 0.12) 45%, transparent 75%);
+  filter: blur(50px);
+  animation: pulseGlow 10s ease-in-out infinite alternate;
   transition: opacity 500ms ease;
 }
 
-/* Night: Warm Lamp Glow Behind Hero Area */
+/* Night: Warm Lamp Radiance Behind Content */
 .lamp-glow {
   position: absolute;
-  top: 20%;
+  top: 15%;
   left: 50%;
   transform: translateX(-50%);
-  width: 800px;
-  height: 480px;
+  width: 900px;
+  height: 550px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(229, 178, 93, 0.12) 0%, rgba(181, 83, 47, 0.03) 60%, transparent 80%);
-  filter: blur(60px);
+  background: radial-gradient(ellipse, rgba(229, 178, 93, 0.22) 0%, rgba(181, 83, 47, 0.08) 55%, transparent 80%);
+  filter: blur(70px);
   opacity: 0;
+  animation: flickerLamp 8s ease-in-out infinite alternate;
   transition: opacity 500ms ease;
 }
 
@@ -113,56 +155,68 @@
   opacity: 1;
 }
 
-/* Night: Distant Twinkling Stars */
+@keyframes pulseGlow {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes flickerLamp {
+  0% { transform: translateX(-50%) scale(0.96); opacity: 0.85; }
+  50% { transform: translateX(-50%) scale(1.02); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.98); opacity: 0.92; }
+}
+
+/* Night: Twinkling Star Field */
 .star-particle {
   position: absolute;
-  width: 2px;
-  height: 2px;
+  width: 3px;
+  height: 3px;
   background-color: #ECE6D6;
   border-radius: 50%;
   opacity: 0;
-  animation: twinkle 6s ease-in-out infinite;
+  animation: twinkle 5s ease-in-out infinite;
+  box-shadow: 0 0 6px #ECE6D6;
 }
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0; transform: scale(0.6); }
-  50% { opacity: 0.35; transform: scale(1.2); }
+  0%, 100% { opacity: 0.05; transform: scale(0.6); }
+  50% { opacity: 0.65; transform: scale(1.4); }
 }
 
-/* Bottom Paper-Cut Hills Silhouette */
+/* Paper-Cut Hills Silhouette */
 .paper-cut-silhouette {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 120px;
-  opacity: 0.08;
+  height: 140px;
+  opacity: 0.09;
   color: var(--text-ink);
   transition: color 400ms ease, opacity 400ms ease;
 }
 
 [data-theme="night"] .paper-cut-silhouette {
-  opacity: 0.15;
+  opacity: 0.22;
   color: #06070B;
 }
 
 /* Calm Mode & Prefers-Reduced-Motion */
 body.calm-mode .floating-glyph,
-body.calm-mode .star-particle {
+body.calm-mode .star-particle,
+body.calm-mode .ambient-ink-mote,
+body.calm-mode .sunrise-glow,
+body.calm-mode .lamp-glow {
   animation: none !important;
   transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .floating-glyph {
+  .floating-glyph,
+  .star-particle,
+  .ambient-ink-mote,
+  .sunrise-glow,
+  .lamp-glow {
     animation: none !important;
-    transform: none !important;
-  }
-  .star-particle {
-    animation: none !important;
-    opacity: 0.2 !important;
-  }
-  .bg-layer-mid {
     transform: none !important;
   }
 }

@@ -38,6 +38,7 @@ export default function MorphologyCards({
               onClick={() => onSelectWord(cleanWord)}
               role="button"
               tabIndex={0}
+              style={{ '--delay-index': idx % 6 }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   onSelectWord(cleanWord);
