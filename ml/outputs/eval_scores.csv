@@ -1,0 +1,9 @@
+﻿name,adapter,n_sentences,bleu_base,chrf_base,bleu_tuned,chrf_tuned
+ncert_run2,ml/checkpoints/run2_full,11,11.1,31.9,9.0,33.2
+test500_run2,ml/checkpoints/run2_full,500,21.4,46.8,26.2,50.9
+test_full_run2,ml/checkpoints/run2_full,2417,19.6,44.4,24.3,48.7
+ncert_run2_nr3,ml/checkpoints/run2_full,11,10.9,31.7,9.1,34.1
+test_full_run3,ml/checkpoints/run3_filtered,2417,19.6,44.4,21.9,46.3
+ncert_run3,ml/checkpoints/run3_filtered,11,11.1,31.9,10.5,31.8
+ood500_run2,ml/checkpoints/run2_full,500,15.5,41.8,15.3,40.8
+ood500_run3,ml/checkpoints/run3_filtered,500,15.5,41.8,15.3,41.2

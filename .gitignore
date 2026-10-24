@@ -52,3 +52,4 @@ data/processed/*
 get-pip.py
 data/lora_smoke/
 data/lora/
+data/lora*/
