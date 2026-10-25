@@ -11,7 +11,7 @@ FUNCTION_WORDS = frozenset("""
 na ca api eva iti atha aTa tatra atra yatra kutra sarvatra yadi tadA yadA kadA yaTA taTA evam
 kim kaH kA saH sA tat etat idam ayam iyam eSaH eSA aham tvam vayam yUyam mAm tvAm tu hi vA
 kila nUnam punaH saha vinA prati asmi asti santi Asit AsIt bhavati bhavanti iva ittham
-sa sA te ye ke tu hi vA nu aTa
+saH sA te ye ke tu hi vA nu aTa
 atra tasmAt yasmAt kasmAt tena yena kena tasya yasya kasya te ye ke
 """.split())
 

@@ -393,7 +393,7 @@ class SandhiEngine:
                 to_devanagari(pausa(left)), to_devanagari(pausa(right)), changed, rule))
         cand.groups = groups
         cand.unfused = len(groups) == 1 and len(pieces) > 1
-        cand.prior = PRIOR_WEIGHT * sum(1 for p in pieces if pausa(p) in FUNCTION_WORDS)
+        cand.prior = PRIOR_WEIGHT * sum(1 for p in (groups or pieces) if pausa(p) in FUNCTION_WORDS)
         return cand
 
     def analyze_token(self, surface: str, next_token: Optional[str] = None) -> TokenAnalysis:
@@ -406,6 +406,23 @@ class SandhiEngine:
                                  ["token longer than %d phonemes: not searched" % MAX_TOKEN_PHONEMES],
                                  warnings=["'%s' is too long to split reliably (stacked compound or missing spaces?); "
                                            "kept as one word" % surface])
+        # Check modern lexicon (Central Sanskrit University neologisms & modern loanwords: सङ्गणकेन, मोबाइलेन, etc.)
+        try:
+            from app.core.modern_lexicon import MODERN_SANSKRIT_TERMS
+            clean_s = surface.strip("।,॥.?!;:\"'()")
+            is_modern = clean_s in MODERN_SANSKRIT_TERMS
+            if not is_modern:
+                for sfx in ["ेण", "ेन", "ाय", "ात्", "ात", "स्य", "े", "ाणि", "ैः", "ेषु", "म्", "ं", "ः"]:
+                    if clean_s.endswith(sfx) and clean_s[:-len(sfx)] in MODERN_SANSKRIT_TERMS:
+                        is_modern = True
+                        break
+            if is_modern:
+                return TokenAnalysis(surface, [clean_s], "resolved", 0.98,
+                                     ["attested in Central Sanskrit University modern lexicon"],
+                                     all_valid=True)
+        except Exception:
+            pass
+
         next_initial = first_sound(to_slp1(next_token)) if next_token else None
         variants = surface_variants(slp, next_initial)
 
@@ -445,10 +462,12 @@ class SandhiEngine:
             if c.n_words == 1:
                 return True
             if c.alternation in intact_variants:
-                # the whole word is already a valid word: only accept a split of it when every junction
-                # is a vowel sandhi (deva+Alayam, sUrya+udayas, yadi+api, na+asti). Splits through
-                # visarga/consonant junctions of valid words (rAs+mas for rAmas) are accidental.
-                return all(j.rule is not None and j.rule.sandhi_type == "स्वरसन्धिः" for j in c.junctions)
+                return all(
+                    j.rule is not None
+                    and j.rule.sandhi_type == "स्वरसन्धिः"
+                    and not (j.rule.rule_name == "पूर्वरूपसन्धिः" and "ऽ" not in surface and "'" not in surface)
+                    for j in c.junctions
+                )
             return True
 
         cands = [c for c in valid if eligible(c)]
@@ -478,10 +497,9 @@ class SandhiEngine:
                 cands.insert(0, top)
                 best = top
         if best.n_words > 1 and unfused:
-            # the language model prefers reading the word as a plain compound (no sandhi) over
-            # the fused split we found -> keep the token whole instead of inventing a split
-            u = min(unfused, key=lambda c: (c.rank, c.n_words))
-            if u.rank < best.rank and self.backend.lm_ranking:
+            # reading the word as a plain compound (no sandhi) over the fused split we found -> keep the token whole
+            u = min(unfused, key=lambda c: (c.n_words, c.rank))
+            if not self.backend.lm_ranking or u.rank < best.rank:
                 return self._compound(surface, self._pick_members(unfused, u), variants, warnings)
         others = [c for c in cands[1:] if c.key != best.key]
         alts = [c.words for c in others[:3]]
@@ -518,7 +536,16 @@ class SandhiEngine:
         if cand is None:
             return
         k = (cand.key, cand.alternation)
-        if k not in pool or cand.rank < pool[k].rank:
+        if k not in pool:
+            pool[k] = cand
+            return
+        existing = pool[k]
+        if existing.all_valid and not cand.all_valid:
+            return
+        if cand.all_valid and not existing.all_valid:
+            pool[k] = cand
+            return
+        if (len(cand.pieces), cand.rank) < (len(existing.pieces), existing.rank):
             pool[k] = cand
 
     # ------------------------------------------------------------------ #

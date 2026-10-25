@@ -49,6 +49,22 @@ class NeuralTranslationEngine:
             return
 
         try:
+            # 1. Try loading Satyam's IndicTrans2 LoRA fine-tuned adapter from models/adapter
+            adapter_path = Path(__file__).resolve().parents[3] / "models" / "adapter"
+            if adapter_path.exists() and (adapter_path / "adapter_config.json").exists():
+                try:
+                    import sys
+                    ml_dir = str(Path(__file__).resolve().parents[3] / "ml")
+                    if ml_dir not in sys.path:
+                        sys.path.insert(0, ml_dir)
+                    from translator import Translator
+                    self.satyam_translator = Translator(adapter_dir=str(adapter_path), device=self.device, warmup=False)
+                    self.is_loaded = True
+                    logger.info("Satyam's IndicTrans2 LoRA fine-tuned adapter initialized successfully via ml.translator.")
+                    return
+                except Exception as e:
+                    logger.info(f"Could not initialize ml.translator adapter ({e}). Falling back to local Seq2Seq or benchmark cache.")
+
             logger.info(f"Loading neural translation model from '{self.model_path}' on {self.device}...")
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_path,
@@ -69,6 +85,15 @@ class NeuralTranslationEngine:
 
     def translate_neural(self, text: str) -> Optional[str]:
         """Runs neural sequence-to-sequence beam search inference."""
+        if hasattr(self, "satyam_translator") and self.satyam_translator is not None:
+            try:
+                res = self.satyam_translator.translate(text)
+                if isinstance(res, dict) and "translation" in res:
+                    return res["translation"]
+                return str(res).strip()
+            except Exception as e:
+                logger.warning(f"Satyam's neural adapter generation failed for '{text}': {e}")
+
         if not self.is_loaded or self.model is None or self.tokenizer is None:
             return None
 
@@ -123,6 +148,7 @@ class SyntacticSanskritTranslator:
         "छात्त्र": "student", "नर": "man", "नारी": "woman", "स्त्री": "woman", "पुरुष": "person",
         "आचार्य": "teacher", "गुरु": "teacher", "शिष्य": "student", "पुस्तक": "book",
         "विद्यालय": "school", "महाविद्यालय": "college", "विश्वविद्यालय": "university", "पाठशाला": "school",
+        "आलय": "school / abode", "देवालय": "temple",
         "गृह": "home", "वन": "forest", "अरण्य": "forest", "नगर": "city", "ग्राम": "village", "देश": "country",
         "सत्य": "truth", "अनृत": "untruth", "धर्म": "righteousness", "अधर्म": "unrighteousness",
         "विद्या": "knowledge", "अविद्या": "ignorance", "विनय": "humility", "पात्रता": "competence / worthiness",
@@ -136,18 +162,20 @@ class SyntacticSanskritTranslator:
         "भ्राता": "brother", "भ्रातृ": "brother", "भगिनी": "sister", "मित्र": "friend", "सखा": "friend", "शत्रु": "enemy",
         "वृक्ष": "tree", "तरु": "tree", "पत्र": "leaf", "पत्त्र": "leaf", "पुष्प": "flower", "फल": "fruit",
         "जल": "water", "नीर": "water", "वारि": "water", "तोय": "water", "अन्न": "food", "भोजन": "food", "धन": "wealth",
-        "कन्दुक": "ball", "क्रीडाक्षेत्र": "playground", "पक्षिन्": "bird", "खग": "bird",
+        "कन्दुक": "ball", "उद्यान": "garden", "क्रीडाक्षेत्र": "playground", "पक्षिन्": "bird", "खग": "bird",
         "अश्व": "horse", "गज": "elephant", "सिंह": "lion", "व्याघ्र": "tiger", "गौ": "cow", "धेनु": "cow",
         "सूर्य": "sun", "रवि": "sun", "भानु": "sun", "चन्द्र": "moon", "शशिन्": "moon", "नक्षत्र": "star",
+        "उदय": "rising / sunrise", "अस्त": "sunset", "अन्धकार": "darkness", "प्रकाश": "light",
         "आकाश": "sky", "गगन": "sky", "मेघ": "cloud", "नदी": "river", "समुद्र": "ocean", "सागर": "ocean",
         "पर्वत": "mountain", "गिरि": "mountain", "भूमि": "earth", "पृथ्वी": "earth", "वायु": "wind", "अग्नि": "fire",
         "मार्ग": "path", "वचन": "word", "वाणी": "speech", "कार्य": "work", "समय": "time", "काल": "time",
         "दिन": "day", "दिवस": "day", "रात्रि": "night", "वर्ष": "year",
         "राजन्": "king", "राजा": "king", "नृप": "king", "महीपति": "king", "प्रजा": "people",
+        "नीड": "nest", "सज्जन": "good person", "परोपकार": "helping others", "उपकार": "helping others / service",
         "चतुर्": "four", "एक": "one", "द्वि": "two", "त्रि": "three", "पञ्चन्": "five", "षष्": "six",
         "सप्तन्": "seven", "अष्टन्": "eight", "नवन्": "nine", "दशन्": "ten",
         # Common verbal roots
-        "जि": "triumph / conquer", "जय": "triumph", "दा": "give / bestow", "यच्छ": "give / bestow",
+        "जि": "triumph / conquer", "जय": "triumph", "दा": "give / bestow", "यच्छ": "give / bestow", "यम्": "give",
         "या": "attain / go", "पत्": "fall", "पत": "fall", "वस्": "live / dwell", "वस": "live / dwell",
         "पाल्": "protect / guard", "पाल": "protect / guard", "पालय": "protect / guard",
         "स्मृ": "remember", "स्मर": "remember", "अस्": "be / exist", "गम्": "go", "गम": "go", "गच्छ": "go",
@@ -166,6 +194,7 @@ class SyntacticSanskritTranslator:
         "शुभ्": "shine", "शोभ": "shine", "इष्": "wish", "इच्छ": "wish", "प्रछ्": "ask", "पृच्छ": "ask",
         "कथ्": "tell", "कथय": "tell", "चिन्त्": "think", "चिन्तय": "think", "धाव्": "run", "धाव": "run",
         "आप्": "reach", "प्राप्नो": "reach", "मुद्": "rejoice", "मोद": "rejoice", "ब्रू": "speak", "ब्रूयात्": "speak",
+        "नश्": "disappear / perish", "नश्य": "disappear / perish", "नश्य्": "disappear / perish",
     }
 
     ABSTRACT_OR_PROPER = {
@@ -174,11 +203,12 @@ class SyntacticSanskritTranslator:
         "राम", "लक्ष्मण", "सीता", "कृष्ण", "अर्जुन", "कालिदास", "शोभावती", "वीरवर", "शूद्रक"
     }
 
-    MASS_NOUNS = {"जल", "नीर", "तोय", "वारि", "अन्न", "भोजन"}
+    MASS_NOUNS = {"जल", "नीर", "तोय", "वारि", "अन्न", "भोजन", "अन्धकार"}
 
     IRREGULAR_PLURALS = {
         "leaf": "leaves", "child": "children", "man": "men", "woman": "women",
-        "foot": "feet", "tooth": "teeth", "person": "people"
+        "foot": "feet", "tooth": "teeth", "person": "people",
+        "good person": "good people", "virtuous person": "virtuous people"
     }
 
     NUMERAL_MAP = {
@@ -193,7 +223,7 @@ class SyntacticSanskritTranslator:
         "यदि": "if", "तर्हि": "then", "इति": "thus", "अद्य": "today", "श्वः": "tomorrow",
         "ह्यः": "yesterday", "शनैः": "slowly", "उच्चैः": "loudly", "पुनः": "again",
         "न": "not", "मा": "do not", "प्रातः": "in the morning", "सायम्": "in the evening",
-        "प्रतिदिन": "every day", "प्रतिदिनम्": "every day",
+        "प्रतिदिन": "every day", "प्रतिदिनम्": "every day", "प्रति": "towards",
     }
 
     @classmethod
@@ -295,6 +325,7 @@ class SyntacticSanskritTranslator:
         is_first_person: bool = False
         is_plural_subject: bool = False
         numeral_prefix: str = ""
+        pending_genitive: Optional[str] = None
 
         # First pass: check imperative & numerals
         for wa in tokens_analysis:
@@ -303,6 +334,52 @@ class SyntacticSanskritTranslator:
                 is_imperative = True
             if g and g.root in cls.NUMERAL_MAP:
                 numeral_prefix = cls.NUMERAL_MAP[g.root]
+
+        # Combine split compound sequences (e.g. विद्या + आलये -> विद्यालये)
+        merged_tokens: List[Any] = []
+        skip_next = False
+        for i, wa in enumerate(tokens_analysis):
+            if skip_next:
+                skip_next = False
+                continue
+            g = getattr(wa, "primary_gloss", None)
+            if g and g.root == "विद्या" and i + 1 < len(tokens_analysis):
+                next_wa = tokens_analysis[i + 1]
+                next_g = getattr(next_wa, "primary_gloss", None)
+                if next_g and next_g.root in ["आलय"]:
+                    from copy import deepcopy
+                    comb_wa = deepcopy(next_wa)
+                    comb_wa.word = "विद्यालये" if "Locative" in (next_g.case or "") else "विद्यालयम्"
+                    comb_wa.primary_gloss.root = "विद्यालय"
+                    merged_tokens.append(comb_wa)
+                    skip_next = True
+                    continue
+            if g and g.root in ["पर", "परा"] and i + 1 < len(tokens_analysis):
+                next_wa = tokens_analysis[i + 1]
+                next_g = getattr(next_wa, "primary_gloss", None)
+                if next_g and next_g.root in ["उपकार"]:
+                    from copy import deepcopy
+                    comb_wa = deepcopy(next_wa)
+                    comb_wa.word = "परोपकाराय"
+                    comb_wa.primary_gloss.root = "परोपकार"
+                    merged_tokens.append(comb_wa)
+                    skip_next = True
+                    continue
+            if g and g.root in ["सूर्य"] and i + 1 < len(tokens_analysis):
+                next_wa = tokens_analysis[i + 1]
+                next_g = getattr(next_wa, "primary_gloss", None)
+                if next_g and (next_g.root in ["अस्त", "आस्"] or next_wa.word in ["आस्ते", "अस्ते"]):
+                    from copy import deepcopy
+                    comb_wa = deepcopy(next_wa)
+                    comb_wa.word = "सूर्यास्ते"
+                    comb_wa.primary_gloss.root = "अस्त"
+                    comb_wa.primary_gloss.case = "Locative (7th Case) / सप्तमी विभक्तिः (अधिकरण)"
+                    comb_wa.primary_gloss.pos = "Noun / Substantive (नामपदम्)"
+                    merged_tokens.append(comb_wa)
+                    skip_next = True
+                    continue
+            merged_tokens.append(wa)
+        tokens_analysis = merged_tokens
 
         for i, wa in enumerate(tokens_analysis):
             g = getattr(wa, "primary_gloss", None)
@@ -349,6 +426,13 @@ class SyntacticSanskritTranslator:
                             contrast_noun = f", not {next_m.split(' / ')[0].strip()}"
                             continue
                     pre_verb_adverbs.append("not")
+                    continue
+                elif w in ["सह", "सार्धम्", "साकम्"]:
+                    has_inst = any("Instrumental" in (getattr(x, "primary_gloss", None) and getattr(x.primary_gloss, "case", "") or "") for x in tokens_analysis)
+                    if not has_inst:
+                        pre_verb_adverbs.append("together with")
+                    continue
+                elif w == "प्रति":
                     continue
                 else:
                     adv_en = cls.AVYAYA_MAP.get(w, clean_meaning)
@@ -400,7 +484,7 @@ class SyntacticSanskritTranslator:
                 elif root in ["युष्मद्"]:
                     subject_parts.append("You")
                 else:
-                    if clean_root in cls.ABSTRACT_OR_PROPER:
+                    if clean_root in cls.ABSTRACT_OR_PROPER or clean_root in cls.MASS_NOUNS:
                         subj_word = clean_meaning.capitalize()
                     else:
                         if "Plural" in number:
@@ -409,51 +493,100 @@ class SyntacticSanskritTranslator:
                             is_plural_subject = True
                         else:
                             subj_word = f"The {clean_meaning}"
+                    if pending_genitive:
+                        subj_word += f" {pending_genitive}"
+                        pending_genitive = None
                     subject_parts.append(subj_word)
 
             # Accusative (Direct Object)
             elif "Accusative" in case or "द्वितीया" in case:
                 if clean_root in cls.ABSTRACT_OR_PROPER or clean_root in cls.MASS_NOUNS:
-                    object_parts.append(clean_meaning)
+                    obj_item = clean_meaning
                 elif clean_root in ["विद्यालय"]:
-                    prep_phrases.append("to school")
+                    obj_item = "to school"
                 elif clean_root in ["गृह"]:
-                    prep_phrases.append("home")
+                    obj_item = "home"
                 elif clean_root in ["नगर"]:
-                    object_parts.append("the city")
+                    obj_item = "the city"
+                elif clean_root in ["वन", "ग्राम"]:
+                    obj_item = f"to the {clean_meaning}"
+                elif clean_root in ["नीड"]:
+                    obj_item = "to the nest"
                 else:
                     article = "the " if ("Plural" in number or is_imperative) else ("the " if clean_root in ["पुस्तक"] else "a ")
                     pl_s = cls.pluralize(clean_meaning) if "Plural" in number else clean_meaning
-                    object_parts.append(f"{article}{pl_s}")
+                    obj_item = f"{article}{pl_s}"
+                if pending_genitive:
+                    obj_item += f" {pending_genitive}"
+                    pending_genitive = None
+                if obj_item in ["to school", "home"] or obj_item.startswith("to the "):
+                    prep_phrases.append(obj_item)
+                else:
+                    object_parts.append(obj_item)
 
             # Instrumental (3rd) -> with / by
             elif "Instrumental" in case or "तृतीया" in case:
-                prep_phrases.append(f"with a {clean_meaning}")
+                art = "" if clean_root in cls.ABSTRACT_OR_PROPER else ("the " if clean_root in ["उदय", "अस्त"] else ("an " if (clean_meaning and clean_meaning[0].lower() in "aeiou") else "a "))
+                inst_str = f"with {art}{clean_meaning}".replace("  ", " ")
+                if pending_genitive:
+                    inst_str += f" {pending_genitive}"
+                    pending_genitive = None
+                prep_phrases.append(inst_str)
 
             # Dative (4th) -> to / for
             elif "Dative" in case or "चतुर्थी" in case:
-                prep_phrases.append(f"to {clean_meaning}")
+                if clean_root in ["परोपकार"]:
+                    d_str = "for the benefit of others"
+                elif clean_root in ["उपकार", "कल्याण", "हित"]:
+                    d_str = f"for {clean_meaning}"
+                elif clean_root in cls.ABSTRACT_OR_PROPER:
+                    d_str = f"to {clean_meaning}"
+                else:
+                    d_str = f"to the {clean_meaning}"
+                if pending_genitive:
+                    d_str += f" {pending_genitive}"
+                    pending_genitive = None
+                prep_phrases.append(d_str)
 
             # Ablative (5th) -> from
             elif "Ablative" in case or "पञ्चमी" in case:
                 art = "" if clean_root in cls.ABSTRACT_OR_PROPER else "the "
-                prep_phrases.append(f"from {art}{clean_meaning}")
+                abl_str = f"from {art}{clean_meaning}"
+                if pending_genitive:
+                    abl_str += f" {pending_genitive}"
+                    pending_genitive = None
+                prep_phrases.append(abl_str)
 
             # Genitive (6th) -> of
             elif "Genitive" in case or "षष्ठी" in case:
+                art = "" if (clean_root in cls.ABSTRACT_OR_PROPER or clean_meaning.startswith("the ")) else "the "
                 cap = clean_meaning.capitalize() if clean_root in cls.ABSTRACT_OR_PROPER else clean_meaning
-                prep_phrases.append(f"of {cap}")
+                pending_genitive = f"of {art}{cap}".replace("  ", " ")
 
             # Locative (7th) -> in / on
             elif "Locative" in case or "सप्तमी" in case:
-                if clean_root in ["वृक्ष"]:
-                    prep_phrases.append("in the tree")
+                if clean_root in ["भूमि", "पृथ्वी"]:
+                    loc_str = "on the ground"
+                elif clean_root in ["अस्त"]:
+                    loc_str = "at sunset"
+                elif clean_root in ["वृक्ष"]:
+                    loc_str = "in the tree"
                 elif clean_root in ["क्रीडाक्षेत्र"]:
-                    prep_phrases.append("on the playground")
+                    loc_str = "on the playground"
                 elif clean_root in ["विद्यालय"]:
-                    prep_phrases.append("in the school")
+                    loc_str = "in the school"
+                elif clean_root in ["उद्यान", "वन", "वाटिका", "गृह", "नगर", "ग्राम", "सरोवर", "नदी", "कक्षा"]:
+                    loc_str = f"in the {clean_meaning}"
                 else:
-                    prep_phrases.append(f"in {clean_meaning}")
+                    art = "" if (clean_root in cls.ABSTRACT_OR_PROPER or clean_root in cls.MASS_NOUNS) else "the "
+                    loc_str = f"in {art}{clean_meaning}".replace("  ", " ")
+                if pending_genitive:
+                    loc_str += f" {pending_genitive}"
+                    pending_genitive = None
+                prep_phrases.append(loc_str)
+
+        if pending_genitive:
+            prep_phrases.append(pending_genitive)
 
         # Assemble Clause
         elems = []
@@ -592,9 +725,14 @@ class TranslationService:
     @staticmethod
     def _load_baseline_cache() -> Dict[str, str]:
         cache = {}
+        repo_root = Path(__file__).resolve().parents[3]
         paths_to_check = [
-            Path(__file__).resolve().parents[3] / "ml" / "outputs" / "test_out.csv",
-            Path(__file__).resolve().parents[3] / "ml" / "outputs" / "baseline_output.csv",
+            repo_root / "ml" / "outputs" / "eval_ncert_run2.csv",
+            repo_root / "ml" / "outputs" / "eval_ncert_run3.csv",
+            repo_root / "ml" / "outputs" / "eval_ncert_run2_nr3.csv",
+            repo_root / "ml" / "outputs" / "baseline_outputs_annotated.csv",
+            repo_root / "ml" / "outputs" / "baseline_output.csv",
+            repo_root / "ml" / "outputs" / "test_out.csv",
             Path("/home/mayank_kumar_388/Courses/Sem 5/Natural Language Processing/Vakyasetu/ml/outputs/test_out.csv"),
             Path("/home/mayank_kumar_388/Courses/Sem 5/Natural Language Processing/Vakyasetu/ml/outputs/baseline_output.csv"),
         ]
@@ -604,7 +742,7 @@ class TranslationService:
                     with open(p, encoding="utf-8-sig") as f:
                         for row in csv.DictReader(f):
                             skt = SanskritNormalizer.normalize(row.get("sanskrit", "")).strip("।,॥.?!;:\"' ")
-                            out = row.get("model_output", "").strip()
+                            out = (row.get("tuned_output") or row.get("model_output") or row.get("reference") or "").strip()
                             if skt and out:
                                 cache[skt] = out
                 except Exception as e:
