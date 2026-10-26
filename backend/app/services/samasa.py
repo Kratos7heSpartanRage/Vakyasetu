@@ -191,6 +191,18 @@ CURATED_SAMASAS: Dict[str, Dict[str, Any]] = {
         "components": ["राष्ट्र", "पितृ"],
         "explanation": "राष्ट्र के पिता",
     },
+    "परोपकारः": {
+        "samasa_type": "षष्ठी-तत्पुरुषः",
+        "vigraha": "परेषाम् उपकारः",
+        "components": ["पर", "उपकार"],
+        "explanation": "दूसरों की भलाई / उपकार",
+    },
+    "परोपकाराय": {
+        "samasa_type": "षष्ठी-तत्पुरुषः",
+        "vigraha": "परेषाम् उपकाराय",
+        "components": ["पर", "उपकार"],
+        "explanation": "दूसरों की भलाई के लिए",
+    },
     "ज्ञानयुक्तः": {
         "samasa_type": "तृतीया-तत्पुरुषः",
         "vigraha": "ज्ञानेन युक्तः",
@@ -566,6 +578,23 @@ class SamasaService:
                 self._cache[clean] = res
             return res
 
+        # 1.2 Check if the token is a single uncompounded inflected nominal
+        for sfx in ("ात्", "स्य", "ाय", "ेभ्यः", "ेषु", "ेण", "ेन", "ानाम्", "ाणाम्", "ानि", "ाणि", "ाः"):
+            if clean.endswith(sfx) and len(clean) > len(sfx) + 1:
+                cand_base = clean[:-len(sfx)]
+                if self._is_lexical_stem(cand_base) and not any(cand_base.startswith(pfx) for pfx in ["महा", "सु", "कु", "पर"]):
+                    with self._lock:
+                        self._cache[clean] = None
+                    return None
+        if clean.endswith("वे") and len(clean) > 3 and self._is_lexical_stem(clean[:-2] + "ु"):
+            with self._lock:
+                self._cache[clean] = None
+            return None
+        if clean.endswith("ौ") and len(clean) > 2 and (self._is_lexical_stem(clean[:-1] + "ि") or self._is_lexical_stem(clean[:-1] + "ी")):
+            with self._lock:
+                self._cache[clean] = None
+            return None
+
         # 2. Rule-based algorithmic decomposition
         # 2.1 Avyayībhāva: prefix matching
         if clean.startswith("यथा") and len(clean) > 3:
@@ -581,44 +610,47 @@ class SamasaService:
                 self._cache[clean] = res
             return res
 
-        if clean.startswith("उप") and len(clean) > 2:
+        if clean.startswith("उप") and clean.endswith("म्") and len(clean) > 4:
             remainder = clean[2:].rstrip("म्")
-            res = SamasaAnalysis(
-                compound_word=clean,
-                samasa_type="अव्ययीभावः",
-                vigraha_vakya=f"{remainder}स्य समीपम्",
-                components=["उप", remainder],
-                explanation=f"{remainder} के समीप (उप-सामीप्ये)",
-            )
-            with self._lock:
-                self._cache[clean] = res
-            return res
+            if self._is_lexical_stem(remainder) and remainder not in ["कार", "देश", "वन"]:
+                res = SamasaAnalysis(
+                    compound_word=clean,
+                    samasa_type="अव्ययीभावः",
+                    vigraha_vakya=f"{remainder}स्य समीपम्",
+                    components=["उप", remainder],
+                    explanation=f"{remainder} के समीप (उप-सामीप्ये)",
+                )
+                with self._lock:
+                    self._cache[clean] = res
+                return res
 
-        if clean.startswith("प्रति") and len(clean) > 5:
+        if clean.startswith("प्रति") and clean.endswith("म्") and len(clean) > 5:
             remainder = clean[5:].rstrip("म्")
-            res = SamasaAnalysis(
-                compound_word=clean,
-                samasa_type="अव्ययीभावः",
-                vigraha_vakya=f"{remainder}ं {remainder}ं प्रति",
-                components=["प्रति", remainder],
-                explanation=f"प्रत्येक {remainder} (प्रति-वीप्सायाम्)",
-            )
-            with self._lock:
-                self._cache[clean] = res
-            return res
+            if self._is_lexical_stem(remainder):
+                res = SamasaAnalysis(
+                    compound_word=clean,
+                    samasa_type="अव्ययीभावः",
+                    vigraha_vakya=f"{remainder}ं {remainder}ं प्रति",
+                    components=["प्रति", remainder],
+                    explanation=f"प्रत्येक {remainder} (प्रति-वीप्सायाम्)",
+                )
+                with self._lock:
+                    self._cache[clean] = res
+                return res
 
-        if clean.startswith("निर्") and len(clean) > 3:
+        if clean.startswith("निर्") and clean.endswith("म्") and len(clean) > 4:
             remainder = clean[3:].rstrip("म्")
-            res = SamasaAnalysis(
-                compound_word=clean,
-                samasa_type="अव्ययीभावः",
-                vigraha_vakya=f"{remainder}ाणाम् अभावः",
-                components=["निर्", remainder],
-                explanation=f"{remainder} का अभाव",
-            )
-            with self._lock:
-                self._cache[clean] = res
-            return res
+            if self._is_lexical_stem(remainder):
+                res = SamasaAnalysis(
+                    compound_word=clean,
+                    samasa_type="अव्ययीभावः",
+                    vigraha_vakya=f"{remainder}ाणाम् अभावः",
+                    components=["निर्", remainder],
+                    explanation=f"{remainder} का अभाव",
+                )
+                with self._lock:
+                    self._cache[clean] = res
+                return res
 
         # 2.1.5 Avyayībhāva: 'स-' prefix (स-साहित्ये e.g. सस्मितम् -> स्मितेन सहितम्, सादरम् -> आदरेण सहितम्)
         if clean.startswith("स") and clean.endswith("म्") and len(clean) > 3 and not clean.startswith(("सम्", "सं")):
@@ -883,16 +915,28 @@ class SamasaService:
         if len(clean) < 4:
             return None
 
+        # Check if the word is simply an uncompounded inflected nominal (e.g. वृक्षात् -> stem वृक्ष)
+        # to avoid decomposing regular case inflections into fake compounds.
+        for sfx in ("ात्", "स्य", "ाय", "ेभ्यः", "ेषु", "ेण", "ेन", "ानाम्", "ाणाम्"):
+            if clean.endswith(sfx) and len(clean) > len(sfx) + 1:
+                cand_base = clean[:-len(sfx)]
+                if self._is_lexical_stem(cand_base) and not any(cand_base.startswith(pfx) for pfx in ["महा", "सु", "कु", "पर"]):
+                    return None
+
         from app.services.morphology import get_morphology_service
         morph_svc = get_morphology_service()
 
         def _count_aksharas(w: str) -> int:
             return len(re.findall(r"[\u0904-\u0939]", w))
 
+        def _count_syllables(w: str) -> int:
+            return len(re.sub(r'[\u0915-\u0939]्', '', w))
+
         def _lex_score(token: str) -> float:
             c = token.strip("।,॥.?!")
             aksh = _count_aksharas(c)
-            if aksh < 2 or c.startswith("्"):
+            syl = _count_syllables(c)
+            if aksh < 2 or syl < 2 or c.startswith("्"):
                 return -100.0
 
             in_stem = self._is_lexical_stem(c)
@@ -924,7 +968,7 @@ class SamasaService:
                 continue
             p1 = clean[:i]
             p2 = clean[i:]
-            if _count_aksharas(p1) >= 2 and _count_aksharas(p2) >= 2:
+            if _count_syllables(p1) >= 2 and _count_syllables(p2) >= 2:
                 if self._is_lexical_stem(p1) and self._is_lexical_word(p2):
                     s1 = _lex_score(p1)
                     s2 = _lex_score(p2)
@@ -939,7 +983,7 @@ class SamasaService:
                     for v2 in ["अ", "आ"]:
                         c1 = p1_base + v1
                         c2 = v2 + p2_rem
-                        if _count_aksharas(c1) >= 2 and _count_aksharas(c2) >= 2:
+                        if _count_syllables(c1) >= 2 and _count_syllables(c2) >= 2:
                             if self._is_lexical_stem(c1) and self._is_lexical_word(c2):
                                 s1 = _lex_score(c1)
                                 s2 = _lex_score(c2)
@@ -1105,7 +1149,36 @@ class SamasaService:
         if len(clean) < 6:
             return None
 
-        from indic_transliteration import sanscript
+        # Known canonical multi-member compounds (NCERT Classes 9-10)
+        MULTI_MEMBER_REGISTRY = {
+            "रामलक्ष्मणभरताः": {
+                "samasa_type": "इतरेतर-द्वन्द्वः",
+                "vigraha": "रामः च लक्ष्मणः च भरतः च इति रामलक्ष्मणभरताः",
+                "components": ["राम", "लक्ष्मण", "भरताः"],
+                "explanation": "राम, लक्ष्मण और भरत का इतरेतर द्वन्द्व समास (चार्थे द्वन्द्वः)",
+            },
+            "सूर्यचन्द्रनक्षत्राणि": {
+                "samasa_type": "इतरेतर-द्वन्द्वः (समाहार-द्वन्द्वः)",
+                "vigraha": "सूर्यः च चन्द्रः च नक्षत्राणि च इति सूर्यचन्द्रनक्षत्राणि",
+                "components": ["सूर्य", "चन्द्र", "नक्षत्राणि"],
+                "explanation": "सूर्य, चन्द्र और नक्षत्रों का द्वन्द्व समास",
+            },
+            "मन्दहासशोभितवदनम्": {
+                "samasa_type": "बहुपद-समासः",
+                "vigraha": "मन्दः हासः मन्दहासः, मन्दहासेन शोभितं मन्दहासशोभितम्, मन्दहासशोभितं वदनं यस्य तत्",
+                "components": ["मन्द", "हास", "शोभित", "वदनम्"],
+                "explanation": "बहुपद-समासः (कर्मधारयगर्भ-तत्पुरुष-बहुव्रीहिः)",
+            },
+        }
+        if clean in MULTI_MEMBER_REGISTRY:
+            reg = MULTI_MEMBER_REGISTRY[clean]
+            return SamasaAnalysis(
+                compound_word=clean,
+                samasa_type=reg["samasa_type"],
+                vigraha_vakya=reg["vigraha"],
+                components=reg["components"],
+                explanation=reg["explanation"],
+            )
         try:
             from sanskrit_parser.base.sanskrit_base import SanskritNormalizedString
         except (ImportError, ModuleNotFoundError):

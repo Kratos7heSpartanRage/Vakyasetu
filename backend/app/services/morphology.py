@@ -1548,6 +1548,18 @@ class MorphologyService:
                 self._word_cache.move_to_end(clean_word)
                 return self._word_cache[clean_word]
 
+        # 1.1 Modern Sanskrit Lexicon check (Central Sanskrit University neologisms & loanwords)
+        modern_analysis = self._lookup_modern_lexicon(clean_word)
+        if modern_analysis is not None:
+            self._cache_word(clean_word, modern_analysis)
+            return modern_analysis
+
+        # 1.2 NCERT Avyaya check: Prevents rare nominal tags (e.g. 'api' -> water locative) from shadowing indeclinables
+        if clean_word in NCERT_AVYAYAS:
+            result = self._fallback_analysis(clean_word)
+            self._cache_word(clean_word, result)
+            return result
+
         # 1.5 Sanskrit Vocabulary & Validation Layer lookup
         from app.services.sandhi_validator import SanskritVocabularyValidator
         val_tok = SanskritVocabularyValidator.validate_token(clean_word)
@@ -1584,7 +1596,12 @@ class MorphologyService:
                 )
             )
             person_val = "1st Person (उत्तमपुरुषः)" if ("1st Person" in val_tok.pos or "1/1" in val_tok.pos) else (
-                "2nd Person (मध्यमपुरुषः)" if "2nd Person" in val_tok.pos else "3rd Person (प्रथमपुरुषः)"
+                "2nd Person (मध्यमपुरुषः)" if "2nd Person" in val_tok.pos else "Third Person (3rd Person / प्रथमपुरुषः)"
+            )
+            pratyaya_val = "क्त्वा / Ktvā" if ("क्त्वा" in val_tok.category or "ktvA" in val_tok.pos or clean_word.endswith("त्वा")) else (
+                "ल्यप् / Lyap" if ("ल्यप्" in val_tok.category or "lyap" in val_tok.pos) else (
+                    "तुमुन् / Tumun" if ("तुमुन्" in val_tok.category or "tumun" in val_tok.pos) else None
+                )
             )
 
             skt_exp = f"मूलम्: {val_tok.lemma} | {val_tok.category} | {val_tok.pos}"
@@ -1599,7 +1616,7 @@ class MorphologyService:
                 tense=tense_val,
                 person=person_val if is_verb_type else None,
                 prefix=None,
-                pratyaya=None,
+                pratyaya=pratyaya_val,
                 voice="कर्तरि प्रयोगः / Active Voice" if is_verb_type else None,
                 sanskrit_explanation=skt_exp,
                 english_explanation=eng_exp,
@@ -1607,18 +1624,6 @@ class MorphologyService:
             result = WordAnalysis(word=word, primary_gloss=gloss, confidence=val_tok.confidence)
             self._cache_word(clean_word, result)
             return result
-
-        # 2. NCERT Avyaya check: Prevents rare nominal tags (e.g. 'api' -> water locative) from shadowing indeclinables
-        if clean_word in NCERT_AVYAYAS:
-            result = self._fallback_analysis(clean_word)
-            self._cache_word(clean_word, result)
-            return result
-
-        # 3. Modern Sanskrit Lexicon check (Central Sanskrit University neologisms & loanwords)
-        modern_analysis = self._lookup_modern_lexicon(clean_word)
-        if modern_analysis is not None:
-            self._cache_word(clean_word, modern_analysis)
-            return modern_analysis
 
         raw_parses = self._lookup_lexical_database(clean_word)
         if not raw_parses:
@@ -1676,11 +1681,33 @@ class MorphologyService:
             elif g.pos.startswith("Indeclinable"):
                 score += 80
 
+            # Neuter plurals ending in -ानि or -ाणि (फलानि, पुस्तकानि, कमलानि, पत्राणि)
+            # must NEVER be confused with rare 1st-person imperative verbs (e.g. root 'Pal' + 'Ani' in Loṭ)
+            if clean_word.endswith(("ानि", "ाणि")):
+                if (g.pos.startswith("Noun") or g.pos.startswith("Substantive")) and any(gen in (g.gender or "") for gen in ["Neuter", "नपुंसकलिङ्गम्"]):
+                    score += 80
+                elif g.pos.startswith("Verb") and g.tense and "Loṭ" in g.tense and "First Person" in (g.person or ""):
+                    score -= 100
+
+            # Locative feminine/masculine nouns ending in -ौ (भूमौ, रात्रौ, हरौ)
+            if clean_word.endswith("ौ") and g.case and "Locative" in g.case:
+                score += 50
+
             if g.case:
                 if "Nominative" in g.case:
                     score += 40
                 elif "Accusative" in g.case:
                     score += 30
+                elif "Locative" in g.case:
+                    score += 35
+                elif "Instrumental" in g.case:
+                    score += 30
+                elif "Dative" in g.case:
+                    score += 30
+                elif "Ablative" in g.case:
+                    score += 30
+                elif "Genitive" in g.case:
+                    score += 25
 
             # Prefer active voice for standard textbook prose
             if g.voice and "Active" in g.voice:
@@ -1899,7 +1926,7 @@ class MorphologyService:
             case_str = g.case or ""
 
             # Check if this word has an alternative nominal Accusative gloss (e.g. सत्यं when parsed as avyaya)
-            if (g.pos.startswith("Indeclinable") or not case_str) and main_verb:
+            if (g.pos.startswith("Indeclinable") or (not case_str and not g.pos.startswith("Verb"))) and main_verb:
                 for a_idx, alt_g in enumerate(w.alternative_glosses):
                     if alt_g.case and "Accusative" in alt_g.case:
                         old_p = w.primary_gloss
@@ -1925,6 +1952,29 @@ class MorphologyService:
                         w.karaka_role = "विशेषणम् (Subject Modifier)"
                         claimed_indices.add(i)
                         continue
+
+            # Locative (Adhikaraṇa) preference for location / container nominals: e.g. उद्याने, विद्यालये, गृहे, वने
+            if clean.endswith(("े", "ेषु", "ायाम्", "ौ")) and any("Locative" in (alt.case or "") for alt in w.alternative_glosses):
+                for a_idx, alt_g in enumerate(w.alternative_glosses):
+                    if alt_g.case and "Locative" in alt_g.case:
+                        old_p = w.primary_gloss
+                        w.primary_gloss = w.alternative_glosses.pop(a_idx)
+                        w.alternative_glosses.insert(0, old_p)
+                        case_str = w.primary_gloss.case or ""
+                        break
+                w.karaka_role = "अधिकरणम् (Location)"
+                claimed_indices.add(i)
+                if main_verb:
+                    karaka_relations.append(
+                        KarakaRelation(
+                            source_word=w.word,
+                            target_word=main_verb.word,
+                            relation="अधिकरणम् (Location)",
+                            vibhakti="सप्तमी",
+                            rule="सप्तम्यधिकरणे च (२.३.३६)",
+                        )
+                    )
+                continue
 
             # If sentence ALREADY has a subject, any second Nom/Acc word (like पुस्तकं, फलम्, सत्यम्) is Accusative (Karma)
             if subject_idx is not None and ("Nominative" in case_str or "Accusative" in case_str or clean in ["सत्यम्", "सत्यं", "पुस्तकम्", "पुस्तकं", "फलम्", "फलं"]):
