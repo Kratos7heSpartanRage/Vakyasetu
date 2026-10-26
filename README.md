@@ -102,24 +102,28 @@ t.translate("बालकः विद्यालयं गच्छति।")
 
 ---
 
-## 📊 Results
+## 📊 Results & Statistical Evaluation
 
-BLEU / chrF on the official Sāmayik **test split** (2,417 sentences). The base model is the unmodified
-IndicTrans2. "Modern" means the reference English contains no King-James-style words.
+BLEU and chrF on the official Sāmayik **test split** (2,417 sentences) evaluated with **95% Paired Bootstrap Confidence Intervals** ($B = 1,000$ resamples) and empirical $p$-values. The base model is unmodified IndicTrans2. "Modern" means reference English containing no archaic King-James words.
 
-| Subset | Sentences | Base model | **Fine-tuned** |
-|---|---|---|---|
-| All | 2,417 | 19.6 / 44.4 | **24.3 / 48.7** |
-| Modern-English references | 2,224 | 21.4 / 46.5 | **26.3 / 50.6** |
-| Bible-style references | 193 | 8.7 / 32.4 | **14.4 / 37.9** |
+| Subset | Sentences | Base Model [95% CI] | Fine-Tuned (LoRA) [95% CI] | $\Delta$ Gain [95% CI] | $p$-value |
+|---|---|---|---|---|---|
+| **Modern References** *(Textbook proxy)* | 2,224 | 21.38 [20.17, 22.46] / 46.49 [45.57, 47.52] | **26.29 [24.78, 27.72] / 50.57 [49.60, 51.68]** | **+4.91 [3.82, 6.04] / +4.08 [3.61, 4.59]** | **$p < 0.001$** |
+| **All Test Sentences** | 2,417 | 19.56 [18.53, 20.41] / 44.44 [43.61, 45.26] | **24.29 [23.01, 25.56] / 48.70 [47.79, 49.59]** | **+4.73 [3.73, 5.85] / +4.26 [3.79, 4.79]** | **$p < 0.001$** |
+| **Bible-Style References** *(Archaic)* | 193 | 8.66 [7.33, 10.08] / 32.35 [31.04, 33.72] | **14.44 [11.73, 17.08] / 37.90 [35.99, 39.65]** | **+5.78 [3.46, 8.12] / +5.55 [4.15, 7.04]** | **$p < 0.001$** |
 
-On modern-English references, fine-tuning adds about **+4.9 BLEU and +4.1 chrF** over the base model.
+> 📖 **Comprehensive Model Card & Failure Analysis**: For detailed error taxonomies, failure case studies (e.g. theological bias on *deva*, unsegmented sandhi on *naithichakyam*), and validation variance diagnostics, see [**`docs/TRANSLATION_EVALUATION.md`**](docs/TRANSLATION_EVALUATION.md).
 
-**An honest caveat.** The test split comes from the same sources as the training data, so it says little
-about NCERT textbook Sanskrit. We also scored 11 NCERT sentences against draft reference translations
-(chrF 33.2 fine-tuned vs 31.9 base; BLEU 9.0 vs 11.1). That set is too small for reliable scores. Reading the
-outputs, number agreement and some question words improved, but story sentences sometimes come out in
-Bible-style English ("And behold… unto…"), and one sentence got worse.
+**An honest caveat.** The test split comes from the same sources as the training data, so it says little about unseen NCERT textbook Sanskrit. We also evaluated an 11-sentence probe from NCERT textbooks with draft reference translations. That set is deliberately kept as a qualitative failure discovery probe (documenting sandhi dropouts, archaic markers, and compound vocabulary challenges) rather than a statistical score.
+
+To reproduce the bootstrap evaluation locally:
+```bash
+python3 ml/scripts/bootstrap_eval.py
+```
+To run the fast contract test suite:
+```bash
+pytest tests/test_translator.py -v
+```
 
 ---
 

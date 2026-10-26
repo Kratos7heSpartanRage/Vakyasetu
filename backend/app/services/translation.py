@@ -25,99 +25,81 @@ _MULTI_SPACE_PATTERN = re.compile(r"\s+")
 _PUNCT_SPACE_PATTERN = re.compile(r"\s*,\s*")
 
 # ==============================================================================
-# 1. NEURAL MACHINE TRANSLATION ENGINE (Satyam's IndicTrans2 Wrapper)
+# 1. NEURAL MACHINE TRANSLATION ENGINE (Satyam's IndicTrans2 LoRA Wrapper)
 # ==============================================================================
 
 class NeuralTranslationEngine:
     """
-    Production Neural Translation Engine for IndicTrans2 (distilled 200M).
-    Handles PyTorch tensor generation with beam search and language token formatting.
+    Production Neural Translation Engine for IndicTrans2 LoRA adapter.
+    Uses Satyam's Translator from ml/translator.py to support PEFT adapters,
+    IndicProcessor tokenization, and thread-safe GPU/CPU inference.
     """
 
     def __init__(self, model_path: Optional[str] = None, device: Optional[str] = None):
         self.model_path = model_path or settings.INDIC_TRANS_MODEL_PATH
-        self.device = device or ("cuda" if (torch is not None and torch.cuda.is_available()) else "cpu")
-        self.tokenizer = None
-        self.model = None
+        self.device = device or settings.DEVICE
+        self.translator = None
         self.is_loaded = False
-        if torch is not None and AutoModelForSeq2SeqLM is not None:
-            self._initialize_model()
+        self._initialize_model()
 
     def _initialize_model(self):
-        """Loads IndicTrans2 tokenizer and Seq2Seq model weights."""
-        if not self.model_path:
+        """Loads IndicTrans2 LoRA adapter via the ml.translator module."""
+        repo_root = Path(__file__).resolve().parents[3]
+        paths_to_check = [
+            Path(self.model_path) if self.model_path else None,
+            Path(os.environ.get("VAKYASETU_ADAPTER", "")),
+            repo_root / "models" / "adapter",
+            repo_root / "ml" / "checkpoints" / "run2_full",
+            Path("models/adapter"),
+        ]
+
+        adapter_dir = None
+        for p in paths_to_check:
+            if p and p.exists() and (p / "adapter_config.json").exists():
+                adapter_dir = str(p.resolve())
+                break
+
+        if not adapter_dir:
+            logger.info(
+                f"No LoRA adapter found (checked {paths_to_check}). "
+                "Neural tier will fall back to dynamic grammar-guided syntactic engine."
+            )
             return
 
         try:
-            # 1. Try loading Satyam's IndicTrans2 LoRA fine-tuned adapter from models/adapter
-            adapter_path = Path(__file__).resolve().parents[3] / "models" / "adapter"
-            if adapter_path.exists() and (adapter_path / "adapter_config.json").exists():
-                try:
-                    import sys
-                    ml_dir = str(Path(__file__).resolve().parents[3] / "ml")
-                    if ml_dir not in sys.path:
-                        sys.path.insert(0, ml_dir)
-                    from translator import Translator
-                    self.satyam_translator = Translator(adapter_dir=str(adapter_path), device=self.device, warmup=False)
-                    self.is_loaded = True
-                    logger.info("Satyam's IndicTrans2 LoRA fine-tuned adapter initialized successfully via ml.translator.")
-                    return
-                except Exception as e:
-                    logger.info(f"Could not initialize ml.translator adapter ({e}). Falling back to local Seq2Seq or benchmark cache.")
+            logger.info(f"Loading IndicTrans2 LoRA adapter from '{adapter_dir}' on {self.device}...")
+            ml_dir = str((repo_root / "ml").resolve())
+            if ml_dir not in sys.path:
+                sys.path.insert(0, ml_dir)
 
-            logger.info(f"Loading neural translation model from '{self.model_path}' on {self.device}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_path,
-                trust_remote_code=True,
-                local_files_only=True
+            from translator import Translator
+            self.translator = Translator(
+                adapter_dir=adapter_dir,
+                device=self.device,
+                warmup=False,
             )
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(
-                self.model_path,
-                trust_remote_code=True,
-                local_files_only=True
-            ).to(self.device)
-            self.model.eval()
             self.is_loaded = True
-            logger.info("IndicTrans2 neural model initialized successfully.")
+            logger.info("IndicTrans2 LoRA neural translator loaded successfully.")
         except Exception as e:
-            logger.info(f"Local IndicTrans2 checkpoint not found at '{self.model_path}' ({e}). "
-                        "Using dynamic grammar-guided syntactic translation engine.")
+            logger.warning(
+                f"Could not load LoRA translator from '{adapter_dir}' ({e}). "
+                "Falling back to dynamic grammar-guided translation."
+            )
+            self.translator = None
+            self.is_loaded = False
 
     def translate_neural(self, text: str) -> Optional[str]:
-        """Runs neural sequence-to-sequence beam search inference."""
-        if hasattr(self, "satyam_translator") and self.satyam_translator is not None:
-            try:
-                res = self.satyam_translator.translate(text)
-                if isinstance(res, dict) and "translation" in res:
-                    return res["translation"]
-                return str(res).strip()
-            except Exception as e:
-                logger.warning(f"Satyam's neural adapter generation failed for '{text}': {e}")
-
-        if not self.is_loaded or self.model is None or self.tokenizer is None:
+        """Runs neural inference using the LoRA translator."""
+        if not self.is_loaded or self.translator is None:
             return None
 
         try:
-            inputs = self.tokenizer(
-                text,
-                truncation=True,
-                padding="longest",
-                max_length=128,
-                return_tensors="pt"
-            ).to(self.device)
-
-            with torch.no_grad():
-                generated_tokens = self.model.generate(
-                    **inputs,
-                    num_beams=4,
-                    max_length=128,
-                    early_stopping=True
-                )
-
-            translation = self.tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
-            return translation.strip()
+            result = self.translator.translate(text)
+            if isinstance(result, dict) and "translation" in result:
+                return result["translation"].strip()
+            return str(result).strip()
         except Exception as e:
-            logger.error(f"Neural generation failed: {e}")
+            logger.warning(f"Neural translation inference failed ({e}). Falling back to next tier.")
             return None
 
 # ==============================================================================
