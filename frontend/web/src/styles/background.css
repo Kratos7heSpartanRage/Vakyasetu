@@ -1,0 +1,166 @@
+/* ==========================================================================
+   Hindi School Notebook Ruled Background & Floating Handwritten Letters
+   ========================================================================== */
+
+.living-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  transition: var(--transition-theme);
+}
+
+/* --------------------------------------------------------------------------
+   1. Authentic Hindi School Notebook Rulings (Horizontal Lines Only)
+   -------------------------------------------------------------------------- */
+.bg-notebook-sheet {
+  position: absolute;
+  top: -80px;
+  left: 0;
+  right: 0;
+  bottom: -80px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 31px,
+    var(--line-ruled) 31px,
+    var(--line-ruled) 32px
+  );
+  background-size: 100% 32px;
+  opacity: 0.95;
+  will-change: transform;
+}
+
+/* --------------------------------------------------------------------------
+   2. Classic Double Red Margin Down the Left Side
+   -------------------------------------------------------------------------- */
+.bg-notebook-margin-double {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: clamp(40px, 5.5vw, 76px);
+  width: 8px;
+  pointer-events: none;
+}
+
+.bg-notebook-margin-double::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1.5px;
+  background: var(--line-margin);
+  opacity: 0.85;
+}
+
+.bg-notebook-margin-double::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 1px;
+  background: var(--line-margin);
+  opacity: 0.65;
+}
+
+/* Red Notebook Header Rule (where Date / Page No. is written in copybooks) */
+.bg-notebook-top-margin {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: var(--line-margin);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. Floating Handwritten Hindi & Sanskrit Letters
+   -------------------------------------------------------------------------- */
+.bg-handwritten-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.handwritten-floating-letter {
+  position: absolute;
+  font-family: var(--font-margin);
+  font-weight: 400;
+  color: var(--text-ink);
+  opacity: 0.22;
+  user-select: none;
+  pointer-events: none;
+  line-height: 1;
+  will-change: transform;
+  animation: floatHandwritten 12s ease-in-out infinite alternate;
+  transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg));
+  transition: opacity 300ms ease;
+}
+
+[data-theme="night"] .handwritten-floating-letter {
+  opacity: 0.28;
+  color: var(--color-accent);
+  text-shadow: 0 0 8px rgba(229, 178, 93, 0.22);
+}
+
+@keyframes floatHandwritten {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg));
+  }
+  50% {
+    transform: translate3d(var(--float-x, 8px), var(--float-y, -12px), 0) rotate(calc(var(--base-rot, 0deg) + 3deg));
+  }
+  100% {
+    transform: translate3d(calc(var(--float-x, 8px) * -0.6), calc(var(--float-y, -12px) * -0.8), 0) rotate(calc(var(--base-rot, 0deg) - 2deg));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Ambient Paper Warmth & Lamp Glow
+   -------------------------------------------------------------------------- */
+.bg-paper-warmth-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 30%,
+    rgba(242, 214, 117, 0.08) 0%,
+    transparent 65%
+  );
+  transition: opacity 400ms ease;
+}
+
+[data-theme="night"] .bg-paper-warmth-glow {
+  background: radial-gradient(
+    circle at 50% 25%,
+    rgba(229, 178, 93, 0.06) 0%,
+    transparent 70%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   Calm Mode & Reduced Motion
+   -------------------------------------------------------------------------- */
+.living-background.is-calm .handwritten-floating-letter {
+  animation: none !important;
+  transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg)) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handwritten-floating-letter {
+    animation: none !important;
+    transform: translate3d(0, 0, 0) rotate(var(--base-rot, 0deg)) !important;
+  }
+  .bg-notebook-sheet {
+    will-change: auto;
+  }
+}

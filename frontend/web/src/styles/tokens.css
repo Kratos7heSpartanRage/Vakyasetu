@@ -1,0 +1,108 @@
+/* ==========================================================================
+   VākyaSetu Design Tokens
+   NCERT Textbook Nostalgia Design System
+   ========================================================================== */
+
+:root {
+  /* Day Theme ("Paper") - Default */
+  --bg-canvas: #EDE4D0;
+  --bg-paper: #F5EEDC;
+  --bg-paper-card: #FAF5EA;
+  --bg-paper-lift: #FFFDF8;
+
+  --text-ink: #2B2A33;
+  --text-ink-secondary: #55524E;
+  --text-ink-muted: #7E7973;
+  --text-ink-faint: #ADA79F;
+
+  --line-ruled: rgba(85, 130, 195, 0.22);
+  --line-margin: rgba(215, 65, 65, 0.38);
+
+  --color-accent: #B5532F;
+  --color-accent-subtle: rgba(181, 83, 47, 0.10);
+  --color-accent-hover: #9C4324;
+
+  --color-highlight: #F2D675;
+  --color-highlight-subtle: rgba(242, 214, 117, 0.35);
+
+  --color-ok: #7E9C7A;
+  --color-ok-subtle: rgba(126, 156, 122, 0.16);
+
+  --color-warn: #C25B56;
+  --color-warn-subtle: rgba(194, 91, 86, 0.14);
+
+  --border-paper: #DFD4BD;
+  --border-paper-light: #EAE1CD;
+
+  --shadow-paper: 0 2px 4px rgba(43, 42, 51, 0.05), 0 8px 24px rgba(43, 42, 51, 0.07);
+  --shadow-lift: 0 4px 8px rgba(43, 42, 51, 0.10), 0 14px 28px rgba(43, 42, 51, 0.10);
+  --shadow-chip: 0 1px 2px rgba(43, 42, 51, 0.08), 0 2px 4px rgba(43, 42, 51, 0.04);
+
+  /* Spacing Scale (4, 8, 12, 16, 24, 32, 48) */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+
+  /* Border Radii */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 9999px;
+
+  /* Typography */
+  --font-display: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif;
+  --font-reading: "Noto Serif Devanagari", "Source Serif 4", serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+  --font-margin: "Kalam", cursive;
+
+  /* Dynamic Font Scale Multiplier */
+  --font-scale: 1;
+
+  /* Transitions */
+  --transition-theme: background-color 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                      color 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                      border-color 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: all 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Night Theme ("Lamp") */
+[data-theme="night"] {
+  --bg-canvas: #0B0D14;
+  --bg-paper: #12141C;
+  --bg-paper-card: #1A1D28;
+  --bg-paper-lift: #222736;
+
+  --text-ink: #ECE6D6;
+  --text-ink-secondary: #BBB4A5;
+  --text-ink-muted: #8E887B;
+  --text-ink-faint: #5E5B53;
+
+  --line-ruled: rgba(135, 170, 220, 0.12);
+  --line-margin: rgba(225, 90, 90, 0.24);
+
+  --color-accent: #E5B25D;
+  --color-accent-subtle: rgba(229, 178, 93, 0.14);
+  --color-accent-hover: #F0C375;
+
+  --color-highlight: rgba(229, 178, 93, 0.32);
+  --color-highlight-subtle: rgba(229, 178, 93, 0.18);
+
+  --color-ok: #7E9C7A;
+  --color-ok-subtle: rgba(126, 156, 122, 0.18);
+
+  --color-warn: #C97B7B;
+  --color-warn-subtle: rgba(201, 123, 123, 0.18);
+
+  --border-paper: #232736;
+  --border-paper-light: #2C3144;
+
+  --shadow-paper: 0 2px 6px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(0, 0, 0, 0.5);
+  --shadow-lift: 0 4px 12px rgba(0, 0, 0, 0.5), 0 18px 40px rgba(0, 0, 0, 0.65);
+  --shadow-chip: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
